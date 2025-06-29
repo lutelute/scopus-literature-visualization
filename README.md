@@ -101,7 +101,11 @@ cd my_research_project
 git clone https://github.com/YOUR_USERNAME/scopus-literature-visualization.git
 cd scopus-literature-visualization
 
-# 3. ワンコマンド実行（依存関係自動インストール + 実行）
+# 3a. 仮想環境使用（推奨）
+source .venv/bin/activate  # 仮想環境アクティベート
+python3 core/scopus解析.py
+
+# 3b. または、ワンコマンド実行
 python3 run.py
 ```
 
@@ -109,6 +113,9 @@ python3 run.py
 ```bash
 # 依存関係手動インストール
 python3 setup.py
+
+# 仮想環境アクティベート（.venvが存在する場合）
+source .venv/bin/activate
 
 # メインスクリプト実行
 python3 core/scopus解析.py
