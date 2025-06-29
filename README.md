@@ -101,10 +101,16 @@ cd my_research_project
 git clone https://github.com/YOUR_USERNAME/scopus-literature-visualization.git
 cd scopus-literature-visualization
 
-# 3. 自動セットアップ実行
+# 3. ワンコマンド実行（依存関係自動インストール + 実行）
+python3 run.py
+```
+
+### 手動セットアップ（上級者向け）
+```bash
+# 依存関係手動インストール
 python3 setup.py
 
-# 4. 実行
+# メインスクリプト実行
 python3 core/scopus解析.py
 ```
 

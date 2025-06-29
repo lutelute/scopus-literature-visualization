@@ -8,6 +8,45 @@ import os
 import subprocess
 import sys
 import time
+import importlib.util
+
+def 依存関係チェック():
+    """必須パッケージの確認とインストール"""
+    必須パッケージ = ['pandas', 'requests', 'requests_cache', 'tqdm']
+    未インストール = []
+    
+    for パッケージ名 in 必須パッケージ:
+        spec = importlib.util.find_spec(パッケージ名)
+        if spec is None:
+            未インストール.append(パッケージ名)
+    
+    if 未インストール:
+        print(f"⚠️  必須パッケージが不足しています: {', '.join(未インストール)}")
+        print(f"📦 自動インストールを実行しますか？ (y/n): ", end="")
+        
+        try:
+            回答 = input().lower()
+            if 回答 in ['y', 'yes']:
+                print(f"📦 パッケージインストール中...")
+                try:
+                    subprocess.check_call([
+                        sys.executable, '-m', 'pip', 'install'
+                    ] + 未インストール)
+                    print(f"✅ インストール完了: {', '.join(未インストール)}")
+                    return True
+                except subprocess.CalledProcessError:
+                    print(f"❌ 自動インストール失敗")
+                    print(f"手動実行してください: pip install {' '.join(未インストール)}")
+                    return False
+            else:
+                print(f"⏭️  パッケージ不足のまま続行します（エラーが発生する可能性があります）")
+                return False
+        except KeyboardInterrupt:
+            print(f"\n⏹️  中断されました")
+            return False
+    else:
+        print(f"✅ 必須パッケージは全てインストール済みです")
+        return True
 
 def スクリプト実行(スクリプト名: str, 説明: str, 基準ディレクトリ: str) -> bool:
     """スクリプトを実行して結果を返す"""
@@ -85,6 +124,13 @@ def main():
         
         elif 選択 == '1':
             print("\n🚀 完全実行を開始します...")
+            
+            # 依存関係チェック
+            print("\n📦 依存関係をチェック中...")
+            if not 依存関係チェック():
+                print("❌ 依存関係エラーにより中断します")
+                break
+            
             全開始時間 = time.time()
             
             パイプライン = [
@@ -120,11 +166,15 @@ def main():
             break
         
         elif 選択 == '2':
-            スクリプト実行("scopus_doi_to_json.py", "DOI情報完全取得", 基準ディレクトリ)
+            print("\n📦 依存関係をチェック中...")
+            if 依存関係チェック():
+                スクリプト実行("scopus_doi_to_json.py", "DOI情報完全取得", 基準ディレクトリ)
             break
         
         elif 選択 == '3':
-            スクリプト実行("json2tag_ref_scopus_async.py", "Markdown生成・参考文献解決", 基準ディレクトリ)
+            print("\n📦 依存関係をチェック中...")
+            if 依存関係チェック():
+                スクリプト実行("json2tag_ref_scopus_async.py", "Markdown生成・参考文献解決", 基準ディレクトリ)
             break
         
         elif 選択 == '4':
