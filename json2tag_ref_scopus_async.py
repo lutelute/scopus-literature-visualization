@@ -4,13 +4,31 @@
 json2tag_ref_scopus_async.py ― 改良版 (DOI解決500件ずつ分割処理)
 """
 
-import os, json, re, unicodedata, asyncio, aiohttp, async_timeout
+import os, json, re, unicodedata, asyncio
 import time, random, hashlib, logging, traceback
 from urllib.parse import quote_plus
 from typing import Dict, List, Set
 
-import nltk
-from nltk.tokenize import word_tokenize
+# オプションライブラリのインポート（エラーハンドリング付き）
+try:
+    import aiohttp, async_timeout
+    ASYNC_AVAILABLE = True
+    print("✅ aiohttp利用可能 - 高速並列処理モード")
+except ImportError:
+    ASYNC_AVAILABLE = False
+    print("⚠️  aiohttp未インストール - 標準版で実行")
+    import urllib.request
+    import urllib.error
+
+try:
+    import nltk
+    from nltk.tokenize import word_tokenize
+    NLTK_AVAILABLE = True
+    print("✅ NLTK利用可能 - 高度なキーワード分析")
+except ImportError:
+    NLTK_AVAILABLE = False
+    print("⚠️  NLTK未インストール - 基本キーワード分析のみ")
+
 from tqdm import tqdm
 
 # ---------- パラメータ ----------
@@ -37,6 +55,10 @@ def safe_fn(title: str, maxlen: int = 120) -> str:
     return s or hashlib.md5(title.encode()).hexdigest()[:maxlen]
 
 def ensure_nltk():
+    """NLTK利用可能時のみリソースダウンロード"""
+    if not NLTK_AVAILABLE:
+        return
+        
     for res in [("tokenizers/punkt", "punkt"),
                 ("taggers/averaged_perceptron_tagger_eng", "averaged_perceptron_tagger_eng")]:
         try:
@@ -49,8 +71,9 @@ def chunk_list(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# ---------- 非同期 DOI 解決 ----------
-async def fetch_doi_titles(dois: Set[str]) -> Dict[str, str]:
+# ---------- 非同期 DOI 解決 (aiohttp版) ----------
+async def fetch_doi_titles_async(dois: Set[str]) -> Dict[str, str]:
+    """非同期版DOI解決（aiohttp使用）"""
     out = {d: "Unknown" for d in dois}
     sem = asyncio.Semaphore(MAX_CONC)
 
@@ -76,11 +99,57 @@ async def fetch_doi_titles(dois: Set[str]) -> Dict[str, str]:
                 pass
 
         tasks = [fetch_one(d) for d in dois]
-        for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="DOI 解決"):
+        for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="DOI 解決 (高速版)"):
             await f
             await asyncio.sleep(DELAY)
 
     return out
+
+# ---------- 標準版 DOI 解決 (urllib版) ----------
+def fetch_doi_titles_sync(dois: Set[str]) -> Dict[str, str]:
+    """標準版DOI解決（urllib使用）"""
+    out = {d: "Unknown" for d in dois}
+    
+    for doi in tqdm(dois, desc="DOI 解決 (標準版)"):
+        try:
+            # Crossref API試行
+            req = urllib.request.Request(
+                f"https://api.crossref.org/works/{quote_plus(doi)}", 
+                headers=HEAD_X
+            )
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+                if response.status == 200:
+                    js = json.loads(response.read().decode())
+                    out[doi] = js["message"].get("title", ["Unknown"])[0]
+                    time.sleep(DELAY * 10)  # 標準版はより控えめな間隔
+                    continue
+        except:
+            pass
+            
+        try:
+            # DOI.org API試行
+            req = urllib.request.Request(
+                f"https://doi.org/{quote_plus(doi)}",
+                headers={"Accept": "application/vnd.citationstyles.csl+json", **HEAD_X}
+            )
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+                if response.status == 200:
+                    js = json.loads(response.read().decode())
+                    out[doi] = js.get("title", "Unknown")
+        except:
+            pass
+        
+        time.sleep(DELAY * 10)  # 標準版はより控えめな間隔
+    
+    return out
+
+# ---------- DOI解決統合関数 ----------
+def fetch_doi_titles(dois: Set[str]) -> Dict[str, str]:
+    """利用可能なライブラリに応じてDOI解決を実行"""
+    if ASYNC_AVAILABLE:
+        return asyncio.run(fetch_doi_titles_async(dois))
+    else:
+        return fetch_doi_titles_sync(dois)
 
 # ---------- メイン ----------
 def main():
@@ -114,7 +183,7 @@ def main():
 
         for i, chunk in enumerate(chunk_list(need, CHUNK_SIZE), 1):
             print(f"=== DOI チャンク {i} / {((len(need)-1)//CHUNK_SIZE)+1} 開始 ===")
-            res = asyncio.run(fetch_doi_titles(set(chunk)))
+            res = fetch_doi_titles(set(chunk))
             doi2title.update(res)
             with open("doi_title_cache.json", "w", encoding="utf-8") as fp:
                 json.dump(doi2title, fp, ensure_ascii=False, indent=0)
@@ -129,8 +198,14 @@ def main():
                     bar.update(1)
                     continue
 
-                tags = [t.lower() for t, p in nltk.pos_tag(word_tokenize(ttl))
-                        if p not in STOP_POS and t.lower() not in STOP_TOK]
+                # キーワード抽出（NLTK利用可能時は高度な分析、不可時は基本分析）
+                if NLTK_AVAILABLE:
+                    tags = [t.lower() for t, p in nltk.pos_tag(word_tokenize(ttl))
+                            if p not in STOP_POS and t.lower() not in STOP_TOK]
+                else:
+                    # 基本的なキーワード抽出（単語分割のみ）
+                    words = re.findall(r'\b[a-zA-Z]{3,}\b', ttl.lower())
+                    tags = [w for w in words if w not in STOP_TOK]
                 tags.append(f"year_{year}")
                 md_p = os.path.join(mdir, safe_fn(ttl) + ".md")
                 with open(md_p, "w", encoding="utf-8") as fp:
