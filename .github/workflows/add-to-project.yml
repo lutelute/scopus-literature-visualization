@@ -1,0 +1,25 @@
+name: Add issues to project
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  add-to-project:
+    name: Add issue to project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Add to project
+        uses: actions/add-to-project@v0.4.0
+        with:
+          # プロジェクトURL (作成後に更新必要)
+          project-url: https://github.com/users/lutelute/projects/1
+          github-token: ${{ steps.generate_token.outputs.token }}
