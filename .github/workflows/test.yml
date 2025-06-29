@@ -1,0 +1,35 @@
+name: テスト実行
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9, '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Python ${{ matrix.python-version }} セットアップ
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: 依存関係インストール
+      run: |
+        python -m pip install --upgrade pip
+        python setup.py
+    
+    - name: システムテスト実行
+      run: |
+        python dev_tools/テスト実行.py
+    
+    - name: 進行状況確認テスト
+      run: |
+        python dev_tools/進行状況確認.py
