@@ -91,15 +91,37 @@ python3 enhance_keywords.py
 python3 add_yaml_metadata.py
 ```
 
-## 📋 要件
+## 📋 要件・セットアップ
+
+### クイックスタート（推奨）
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/YOUR_USERNAME/scopus-literature-visualization.git
+cd scopus-literature-visualization
+
+# 2. 自動セットアップ実行
+python3 setup.py
+
+# 3. CSVファイルを配置
+# GFM_rev/scopus_gfm_rev.csv にScopus CSVファイルを配置
+
+# 4. 実行
+python3 core/scopus解析.py
+```
 
 ### 必須要件
-- Python 3.7+
-- インターネット接続（Crossref API, Unpaywall API使用）
+- **Python 3.7+**
+- **インターネット接続**（Crossref API, Unpaywall API使用）
 
-### 推奨ライブラリ
-- `aiohttp`: 高速並列処理（オプション）
-- `nltk`: キーワード分析（オプション）
+### 自動インストールされる依存関係
+- `pandas`: CSVデータ処理
+- `requests`: API通信
+- `requests_cache`: API結果キャッシュ
+- `tqdm`: 進行状況表示
+
+### オプションライブラリ（自動検出・推奨）
+- `aiohttp`: 高速並列処理
+- `nltk`: キーワード分析
 
 ### 入力ファイル
 - `GFM_rev/scopus_gfm_rev.csv`: Scopus CSVファイル
