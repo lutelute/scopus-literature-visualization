@@ -55,28 +55,44 @@ def スクリプト実行(スクリプト名: str, 説明: str, 基準ディレ�
     
     try:
         開始時間 = time.time()
-        結果 = subprocess.run([sys.executable, スクリプト名], 
-                              capture_output=True, 
-                              text=True, 
-                              cwd=基準ディレクトリ)
         
-        実行時間 = time.time() - 開始時間
-        
-        if 結果.returncode == 0:
-            print(f"✅ {説明} 完了 ({実行時間:.1f}秒)")
-            if 結果.stdout:
-                出力行 = 結果.stdout.split('\n')
-                重要行 = [行 for 行 in 出力行 if any(マーク in 行 for マーク in ['✅', '📊', '📁', '完了', '成功'])]
-                for 行 in 重要行[-5:]:  # 最後の5つの重要メッセージ
-                    if 行.strip():
-                        print(f"  {行}")
-            return True
+        # リアルタイム進捗表示の場合は capture_output=False を使用
+        if スクリプト名 in ["json2tag_ref_scopus_async.py", "scopus_doi_to_json.py"]:
+            print(f"📊 リアルタイム進捗表示モード")
+            結果 = subprocess.run([sys.executable, スクリプト名], 
+                                  cwd=基準ディレクトリ)
+            実行時間 = time.time() - 開始時間
+            
+            if 結果.returncode == 0:
+                print(f"✅ {説明} 完了 ({実行時間:.1f}秒)")
+                return True
+            else:
+                print(f"❌ {説明} でエラーが発生しました (コード: {結果.returncode})")
+                return False
         else:
-            print(f"❌ {説明} でエラーが発生しました (コード: {結果.returncode})")
-            if 結果.stderr:
-                print("⚠️ エラー詳細:")
-                print(結果.stderr[-500:])
-            return False
+            # その他のスクリプトは従来通り
+            結果 = subprocess.run([sys.executable, スクリプト名], 
+                                  capture_output=True, 
+                                  text=True, 
+                                  cwd=基準ディレクトリ)
+            
+            実行時間 = time.time() - 開始時間
+            
+            if 結果.returncode == 0:
+                print(f"✅ {説明} 完了 ({実行時間:.1f}秒)")
+                if 結果.stdout:
+                    出力行 = 結果.stdout.split('\n')
+                    重要行 = [行 for 行 in 出力行 if any(マーク in 行 for マーク in ['✅', '📊', '📁', '完了', '成功'])]
+                    for 行 in 重要行[-5:]:  # 最後の5つの重要メッセージ
+                        if 行.strip():
+                            print(f"  {行}")
+                return True
+            else:
+                print(f"❌ {説明} でエラーが発生しました (コード: {結果.returncode})")
+                if 結果.stderr:
+                    print("⚠️ エラー詳細:")
+                    print(結果.stderr[-500:])
+                return False
             
     except Exception as e:
         print(f"❌ スクリプト実行エラー: {e}")
