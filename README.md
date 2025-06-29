@@ -20,31 +20,28 @@ Scopus論文データベースから取得した文献情報を可視化する�
 5. **PDF取得** → オープンアクセス論文の自動ダウンロード
 6. **最終統合** → 学術データベース品質の文献システム完成
 
-## 📁 システム構成
+## 📁 使用方法
 
+### 典型的なワークフロー
 ```
-📦 Scopus文献可視化システム/
-├── 📁 core/                    # メイン機能
-│   └── scopus解析.py            # 日本語メイン実行スクリプト
-├── 📁 pdf_tools/               # PDF取得機能
-│   ├── download_open_access_pdfs.py      # オープンアクセス論文取得
-│   ├── download_open_access_pdfs_fast_stdlib.py  # 高速版
-│   ├── download_researchgate_pdfs.py     # ResearchGate検索
-│   └── PDF取得.py              # 日本語PDF取得スクリプト
-├── 📁 utils/                   # ユーティリティ
-│   └── クリーンアップ.py         # ファイル整理ツール
-├── 📁 GFM_rev/                 # 入力データ
-│   └── scopus_gfm_rev.csv      # Scopus CSVファイル
-├── 📁 JSON_folder/             # 生成JSONファイル (27件)
-├── 📁 md_folder/               # 生成Markdownファイル (27件)
-├── 📁 PDF/                     # 取得PDFファイル (2件)
-├── combine_scopus_csv.py       # CSV結合
-├── scopus_doi_to_json.py       # DOI→JSON変換
-├── json2tag_ref_scopus_async.py # JSON→Markdown変換
-├── enhance_keywords.py         # キーワード分析
-├── update_markdown_keywords.py # キーワード更新
-├── add_yaml_metadata.py        # YAMLメタデータ追加
-└── main.py                     # 英語版メインスクリプト
+📁 my_research_project/           # ユーザーが作成する作業フォルダ
+├── scopus_export_1.csv          # Scopus CSVファイル（複数可）
+├── scopus_export_2.csv
+└── 📁 scopus-literature-visualization/  # クローンしたツール
+    ├── 📁 core/                  # メイン機能
+    ├── 📁 pdf_tools/             # PDF取得機能
+    ├── 📁 utils/                 # ユーティリティ
+    ├── combine_scopus_csv.py     # CSV結合
+    ├── scopus_doi_to_json.py     # DOI→JSON変換
+    ├── json2tag_ref_scopus_async.py # JSON→Markdown変換
+    └── 他のファイル...
+
+実行後:
+├── scopus_combined.csv          # 結合されたCSV
+├── 📁 JSON_folder/              # 生成JSONファイル
+├── 📁 md_folder/                # 生成Markdownファイル
+├── 📁 PDF/                      # 取得PDFファイル
+└── doi_title_cache.json         # DOI解決キャッシュ
 ```
 
 ## 🚀 使用方法
@@ -95,15 +92,17 @@ python3 add_yaml_metadata.py
 
 ### クイックスタート（推奨）
 ```bash
-# 1. リポジトリをクローン
+# 1. 作業フォルダを作成してCSVファイルを配置
+mkdir my_research_project
+cd my_research_project
+# ここにScopus CSVファイルをコピー
+
+# 2. ツールをクローン
 git clone https://github.com/YOUR_USERNAME/scopus-literature-visualization.git
 cd scopus-literature-visualization
 
-# 2. 自動セットアップ実行
+# 3. 自動セットアップ実行
 python3 setup.py
-
-# 3. CSVファイルを配置
-# GFM_rev/scopus_gfm_rev.csv にScopus CSVファイルを配置
 
 # 4. 実行
 python3 core/scopus解析.py
@@ -124,7 +123,7 @@ python3 core/scopus解析.py
 - `nltk`: キーワード分析
 
 ### 入力ファイル
-- `GFM_rev/scopus_gfm_rev.csv`: Scopus CSVファイル
+- **作業フォルダ内の*.csv**: Scopus エクスポートCSVファイル（複数可）
 
 ## 📊 出力
 
@@ -185,10 +184,10 @@ python3 utils/クリーンアップ.py
 ## 🔧 トラブルシューティング
 
 ### よくある問題
-1. **CSVファイルが見つからない**: `GFM_rev/scopus_gfm_rev.csv`の存在確認
-2. **NLTKエラー**: キーワード分析をスキップするか別途インストール
-3. **PDF取得失敗**: オープンアクセス論文が少ないため正常
-4. **権限エラー**: フォルダの書き込み権限確認
+1. **CSVファイルが見つからない**: 作業フォルダにScopus CSVファイルがあるか確認
+2. **NLTKエラー**: キーワード分析をスキップするか `pip install nltk` でインストール
+3. **PDF取得失敗**: オープンアクセス論文が少ないため正常（数件程度は一般的）
+4. **権限エラー**: 作業フォルダの書き込み権限確認
 
 ## 📄 ライセンス
 

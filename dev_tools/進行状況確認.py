@@ -103,12 +103,18 @@ def 問題診断():
     print("=" * 25)
     
     # 入力ファイル確認
-    入力csv = os.path.join(基準ディレクトリ, "GFM_rev", "scopus_gfm_rev.csv")
-    if os.path.exists(入力csv):
-        print("✅ 入力CSVファイル: 存在")
+    親ディレクトリ = os.path.dirname(基準ディレクトリ)
+    csv_files = [f for f in os.listdir(親ディレクトリ) 
+                 if f.endswith('.csv') and f != 'scopus_combined.csv']
+    if csv_files:
+        print(f"✅ 入力CSVファイル: {len(csv_files)}件発見")
+        for csv_file in csv_files[:2]:
+            print(f"   → {csv_file}")
+        if len(csv_files) > 2:
+            print(f"   → ...他{len(csv_files)-2}件")
     else:
         print("❌ 入力CSVファイル: 見つかりません")
-        print("   → GFM_rev/scopus_gfm_rev.csv を確認してください")
+        print("   → 作業フォルダにScopus CSVファイルを配置してください")
     
     # 必要モジュール確認
     try:

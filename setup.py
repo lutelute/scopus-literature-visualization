@@ -93,13 +93,25 @@ def 入力ファイル確認():
     """入力CSVファイルの存在確認"""
     print(f"\n📄 入力ファイルをチェック中...")
     
-    入力パス = os.path.join('GFM_rev', 'scopus_gfm_rev.csv')
-    if os.path.exists(入力パス):
-        print(f"  ✅ {入力パス} - 発見")
+    # 現在のディレクトリでCSVファイルを検索
+    work_dir = os.getcwd()
+    csv_files = [f for f in os.listdir(work_dir) 
+                 if f.endswith('.csv') and f != 'scopus_combined.csv']
+    
+    if csv_files:
+        print(f"  ✅ {len(csv_files)}件のCSVファイルを発見:")
+        for csv_file in csv_files[:3]:  # 最初の3件を表示
+            print(f"    - {csv_file}")
+        if len(csv_files) > 3:
+            print(f"    - ... 他{len(csv_files)-3}件")
         return True
     else:
-        print(f"  ❌ {入力パス} - 見つかりません")
-        print(f"  📝 Scopus CSVファイルを GFM_rev/ フォルダに配置してください")
+        print(f"  ❌ CSVファイルが見つかりません")
+        print(f"  📝 使用方法:")
+        print(f"    1. 作業フォルダを作成")
+        print(f"    2. Scopus CSVファイルを配置")
+        print(f"    3. git clone でこのツールをクローン")
+        print(f"    4. python3 setup.py を実行")
         return False
 
 def 実行例表示():
