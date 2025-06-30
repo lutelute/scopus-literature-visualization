@@ -341,9 +341,10 @@ def main():
     自動実行 = len(sys.argv) > 1 and sys.argv[1] == "--auto"
     
     # Python バージョンチェック
-    if sys.version_info < (3, 7):
-        print("❌ Python 3.7以上が必要です")
+    if sys.version_info < (3, 8):
+        print("❌ Python 3.8以上が必要です")
         print(f"現在のバージョン: {sys.version}")
+        print("💡 Python 3.7は2023年6月でサポート終了しました")
         sys.exit(1)
     else:
         print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} 対応")

@@ -208,7 +208,7 @@ python test_crossplatform.py
 ```
 
 ### 必須要件
-- **Python 3.7+**
+- **Python 3.8+** (Python 3.7は2023年6月でサポート終了)
 - **インターネット接続**（Crossref API, Unpaywall API使用）
 
 ### 自動インストールされる依存関係
