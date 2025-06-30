@@ -23,7 +23,7 @@ def banner():
     print("   4️⃣  Markdown生成・参考文献解決")
     print("   5️⃣  キーワード分析・抽出")
     print("   6️⃣  YAMLメタデータ追加")
-    print("   💡 PDF取得は別途実行: python3 pdf_tools/PDF取得.py")
+    print("   7️⃣  オープンアクセスPDF取得（オプション）")
     print("=" * 60)
 
 def 仮想環境チェック():
@@ -45,27 +45,32 @@ def 仮想環境チェック():
             return False
     else:
         print("⚠️  仮想環境が見つかりません")
-        print("🔧 解決方法:")
-        print("   1. python3 setup.py を先に実行")
-        print("   2. source .venv/bin/activate && python3 全自動実行.py")
-        print("\n自動で setup.py を実行しますか？")
+        print("🔧 自動で setup.py を実行して仮想環境を作成します...")
         
         try:
-            回答 = input("setup.py を実行しますか？ (y/n): ").lower().strip()
-            if 回答 in ['y', 'yes']:
-                print("\n🔧 setup.py を実行中...")
-                try:
-                    結果 = subprocess.run([sys.executable, "setup.py"], check=True)
-                    print("✅ setup.py 実行完了")
-                    print("⚠️  仮想環境をアクティベートしてから再実行してください:")
-                    print("source .venv/bin/activate && python3 全自動実行.py")
+            print("\n🔧 setup.py を実行中...")
+            結果 = subprocess.run([sys.executable, "setup.py"], check=True)
+            print("✅ setup.py 実行完了")
+            print("⚠️  仮想環境をアクティベートしてから再実行してください:")
+            print("source .venv/bin/activate && python3 全自動実行.py")
+            print("\n💡 次回からは以下のコマンドで簡単実行:")
+            print("   source .venv/bin/activate && python3 全自動実行.py")
+            return False
+        except subprocess.CalledProcessError:
+            print("❌ setup.py 実行失敗")
+            print("🔧 手動で実行してください: python3 setup.py")
+            print("⚠️  それでも続行しますか？（仮想環境なし・非推奨）")
+            try:
+                回答 = input("仮想環境なしで続行しますか？ (y/n): ").lower().strip()
+                if 回答 in ['y', 'yes']:
+                    print("⏭️  仮想環境なしで実行します（非推奨）")
+                    return True
+                else:
+                    print("⏹️  処理を中断します")
                     return False
-                except subprocess.CalledProcessError:
-                    print("❌ setup.py 実行失敗")
-                    return False
-            else:
-                print("⏭️  仮想環境なしで実行します（非推奨）")
-                return True
+            except KeyboardInterrupt:
+                print("\n⏹️  中断されました")
+                return False
         except KeyboardInterrupt:
             print("\n⏹️  中断されました")
             return False
@@ -221,6 +226,31 @@ def スクリプト実行(スクリプト名, 説明):
         print(f"❌ {説明} で予期しないエラー: {e}")
         return False
 
+def PDF取得実行():
+    """PDF取得を実行（オプション）"""
+    print(f"\n🔄 オープンアクセスPDF取得を実行中...")
+    print(f"📄 download_open_access_pdfs_fast_stdlib.py")
+    
+    try:
+        開始時間 = time.time()
+        スクリプトパス = os.path.join("pdf_tools", "download_open_access_pdfs_fast_stdlib.py")
+        結果 = subprocess.run([sys.executable, スクリプトパス], check=True)
+        実行時間 = time.time() - 開始時間
+        print(f"✅ オープンアクセスPDF取得 完了 ({実行時間:.1f}秒)")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ PDF取得でエラー発生 (コード: {e.returncode})")
+        return False
+    except Exception as e:
+        print(f"❌ PDF取得で予期しないエラー: {e}")
+        return False
+
+def PDF数確認(pdf_dir="PDF"):
+    """PDFファイル数を確認"""
+    if os.path.exists(pdf_dir):
+        return len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
+    return 0
+
 def main():
     """メイン処理"""
     banner()
@@ -271,27 +301,57 @@ def main():
     # 最終結果
     全実行時間 = time.time() - 全開始時間
     print(f"\n{'='*60}")
-    print("🎉 全自動実行完了!")
+    print("🎉 メイン処理完了!")
     print(f"📊 成功ステップ: {成功ステップ}/{総ステップ}")
     print(f"⏱️  総実行時間: {全実行時間/60:.1f}分")
     
     # 生成ファイル確認
     json_count = len([f for f in os.listdir("JSON_folder") if f.endswith(".json")]) if os.path.exists("JSON_folder") else 0
     md_count = len([f for f in os.listdir("md_folder") if f.endswith(".md")]) if os.path.exists("md_folder") else 0
-    pdf_count = len([f for f in os.listdir("PDF") if f.endswith(".pdf")]) if os.path.exists("PDF") else 0
+    初期pdf_count = PDF数確認()
     
     print(f"\n📁 生成ファイル数:")
     print(f"   📄 JSONファイル: {json_count}件")
     print(f"   📝 Markdownファイル: {md_count}件")
-    print(f"   📋 PDFファイル: {pdf_count}件")
+    print(f"   📋 PDFファイル: {初期pdf_count}件")
     
     if 成功ステップ == 総ステップ:
-        print(f"\n🎯 完全成功! 学術文献データベースが完成しました")
+        print(f"\n🎯 メイン処理完了! 学術文献データベースが完成しました")
         print(f"📂 md_folder/ で Markdown ファイルを確認してください")
-        print(f"\n📋 次のステップ:")
-        print(f"   💾 PDF取得: python3 pdf_tools/PDF取得.py")
-        print(f"   📖 Markdownファイルを確認: md_folder/")
-        print(f"   🔍 JSONデータを確認: JSON_folder/")
+        
+        # PDF取得オプション
+        print(f"\n💡 オプション: オープンアクセス論文のPDF取得")
+        print(f"   (高速並列処理 - 最大8スレッド)")
+        
+        try:
+            回答 = input("\nPDF取得を実行しますか？ (y/n): ").lower().strip()
+            if 回答 in ['y', 'yes']:
+                print(f"\n{'='*50}")
+                print("🔄 7️⃣  オープンアクセスPDF取得")
+                print("=" * 50)
+                
+                if PDF取得実行():
+                    最終pdf_count = PDF数確認()
+                    新規pdf_count = 最終pdf_count - 初期pdf_count
+                    print(f"\n📈 PDF取得結果:")
+                    print(f"   📥 新規PDF取得: {新規pdf_count}件")
+                    print(f"   📁 総PDF数: {最終pdf_count}件")
+                    
+                    print(f"\n🎉 全処理完了! 完全な学術文献データベースが完成しました")
+                    print(f"📂 PDF付きMarkdownファイル: md_folder/")
+                    print(f"📄 PDFファイル: PDF/")
+                else:
+                    print(f"\n⚠️  PDF取得でエラーが発生しましたが、メイン処理は完了しています")
+            else:
+                print(f"\n⏭️  PDF取得をスキップしました")
+                print(f"💡 後でPDF取得する場合: python3 pdf_tools/PDF取得.py")
+        except KeyboardInterrupt:
+            print(f"\n⏹️  中断されました")
+        
+        print(f"\n📋 最終結果:")
+        print(f"   📖 Markdownファイル確認: md_folder/")
+        print(f"   🔍 JSONデータ確認: JSON_folder/")
+        print(f"   📄 PDFファイル確認: PDF/")
     else:
         print(f"\n⚠️  一部ステップでエラーが発生しました")
         print(f"📋 個別実行で問題を解決してください: python3 core/scopus解析.py")
