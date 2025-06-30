@@ -36,6 +36,9 @@ scopus_combined.csv
 input_data.csv
 test_data.csv
 
+# Email Configuration (Security)
+.email_config.json
+
 # OS
 .DS_Store
 .DS_Store?

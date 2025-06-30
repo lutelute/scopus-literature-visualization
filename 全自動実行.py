@@ -12,6 +12,15 @@ import time
 import importlib.util
 import venv
 
+# メール通知機能のインポート（オプション）
+try:
+    from utils.email_notification import (
+        メール設定状況確認, メール設定セットアップ, 処理完了通知送信
+    )
+    EMAIL_AVAILABLE = True
+except ImportError:
+    EMAIL_AVAILABLE = False
+
 def banner():
     """バナー表示"""
     print("🚀 Scopus文献可視化システム - 全自動実行")
@@ -251,6 +260,37 @@ def PDF数確認(pdf_dir="PDF"):
         return len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
     return 0
 
+def メール通知オプション確認():
+    """メール通知オプションの確認と設定"""
+    if not EMAIL_AVAILABLE:
+        return False
+    
+    print(f"\n💡 オプション: 処理完了時のメール通知")
+    
+    # 現在の設定状況確認
+    設定済み, 状況 = メール設定状況確認()
+    print(f"📧 メール設定: {状況}")
+    
+    if 設定済み:
+        try:
+            回答 = input("完了時にメール通知を送信しますか？ (y/n): ").lower().strip()
+            return 回答 in ['y', 'yes']
+        except KeyboardInterrupt:
+            return False
+    else:
+        print("📋 メール通知を有効にするには設定が必要です")
+        try:
+            回答 = input("メール設定をセットアップしますか？ (y/n): ").lower().strip()
+            if 回答 in ['y', 'yes']:
+                if メール設定セットアップ():
+                    print("✅ メール設定完了！完了時に通知を送信します")
+                    return True
+                else:
+                    print("❌ メール設定に失敗しました")
+            return False
+        except KeyboardInterrupt:
+            return False
+
 def main():
     """メイン処理"""
     banner()
@@ -280,6 +320,9 @@ def main():
         return
     
     成功ステップ += 1
+    
+    # メール通知オプション確認
+    メール通知有効 = メール通知オプション確認()
     
     # パイプライン実行
     パイプライン = [
@@ -330,7 +373,8 @@ def main():
                 print("🔄 7️⃣  オープンアクセスPDF取得")
                 print("=" * 50)
                 
-                if PDF取得実行():
+                pdf_結果 = PDF取得実行()
+                if pdf_結果:
                     最終pdf_count = PDF数確認()
                     新規pdf_count = 最終pdf_count - 初期pdf_count
                     print(f"\n📈 PDF取得結果:")
@@ -342,19 +386,63 @@ def main():
                     print(f"📄 PDFファイル: PDF/")
                 else:
                     print(f"\n⚠️  PDF取得でエラーが発生しましたが、メイン処理は完了しています")
+                    最終pdf_count = 初期pdf_count
+                    新規pdf_count = 0
             else:
                 print(f"\n⏭️  PDF取得をスキップしました")
                 print(f"💡 後でPDF取得する場合: python3 pdf_tools/PDF取得.py")
+                pdf_結果 = False
+                最終pdf_count = 初期pdf_count
+                新規pdf_count = 0
         except KeyboardInterrupt:
             print(f"\n⏹️  中断されました")
+            pdf_結果 = False
+            最終pdf_count = 初期pdf_count
+            新規pdf_count = 0
         
         print(f"\n📋 最終結果:")
         print(f"   📖 Markdownファイル確認: md_folder/")
         print(f"   🔍 JSONデータ確認: JSON_folder/")
         print(f"   📄 PDFファイル確認: PDF/")
+        
+        # メール通知送信
+        if メール通知有効:
+            print(f"\n📧 完了通知メールを送信中...")
+            生成ファイル数 = {
+                'json': json_count,
+                'md': md_count,
+                'pdf': 最終pdf_count if 'pdf_結果' in locals() and pdf_結果 else 初期pdf_count
+            }
+            
+            pdf取得結果 = None
+            if 'pdf_結果' in locals() and pdf_結果:
+                pdf取得結果 = {
+                    '新規': 新規pdf_count,
+                    '総数': 最終pdf_count,
+                    '速度': 0  # 速度情報は取得が複雑なため省略
+                }
+            
+            if 処理完了通知送信(成功ステップ, 総ステップ, 全実行時間, 生成ファイル数, pdf取得結果):
+                print("✅ 完了通知メール送信完了")
+            else:
+                print("⚠️  メール送信に失敗しました（処理は正常完了）")
     else:
         print(f"\n⚠️  一部ステップでエラーが発生しました")
         print(f"📋 個別実行で問題を解決してください: python3 core/scopus解析.py")
+        
+        # エラー時もメール通知送信
+        if メール通知有効:
+            print(f"\n📧 エラー通知メールを送信中...")
+            生成ファイル数 = {
+                'json': json_count,
+                'md': md_count,
+                'pdf': 初期pdf_count
+            }
+            
+            if 処理完了通知送信(成功ステップ, 総ステップ, 全実行時間, 生成ファイル数):
+                print("✅ エラー通知メール送信完了")
+            else:
+                print("⚠️  メール送信に失敗しました")
 
 if __name__ == "__main__":
     main()
