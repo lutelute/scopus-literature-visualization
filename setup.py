@@ -10,11 +10,33 @@ import subprocess
 import importlib.util
 import venv
 import shutil
+import platform
 
 def パッケージ確認(パッケージ名: str) -> bool:
     """パッケージがインストールされているかチェック"""
     spec = importlib.util.find_spec(パッケージ名)
     return spec is not None
+
+def 仮想環境アクティベーションコマンド取得(仮想環境パス: str) -> str:
+    """OS別の仮想環境アクティベーションコマンドを取得"""
+    if platform.system() == "Windows":
+        return f"{仮想環境パス}\\Scripts\\activate"
+    else:
+        return f"source {仮想環境パス}/bin/activate"
+
+def 仮想環境Pythonパス取得(仮想環境パス: str) -> str:
+    """OS別の仮想環境内Pythonパスを取得"""
+    if platform.system() == "Windows":
+        return f"{仮想環境パス}\\Scripts\\python.exe"
+    else:
+        return f"{仮想環境パス}/bin/python"
+
+def 仮想環境実行コマンド生成(仮想環境パス: str, コマンド: str) -> str:
+    """OS別の仮想環境実行コマンドを生成"""
+    if platform.system() == "Windows":
+        return f"{仮想環境パス}\\Scripts\\activate && {コマンド}"
+    else:
+        return f"source {仮想環境パス}/bin/activate && {コマンド}"
 
 def 仮想環境チェック作成():
     """仮想環境の存在チェックと自動作成"""
@@ -37,13 +59,21 @@ def 仮想環境チェック作成():
                 venv.create(仮想環境パス, with_pip=True)
                 print(f"✅ 仮想環境作成完了: {仮想環境パス}")
                 print(f"\n💡 次回から以下のコマンドで実行してください:")
-                print(f"source {仮想環境パス}/bin/activate && python3 setup.py")
+                アクティベーションコマンド = 仮想環境アクティベーションコマンド取得(仮想環境パス)
+                if platform.system() == "Windows":
+                    print(f"{アクティベーションコマンド} && python setup.py")
+                else:
+                    print(f"{アクティベーションコマンド} && python3 setup.py")
                 return True
             except Exception as e:
                 print(f"❌ 仮想環境作成失敗: {e}")
                 print(f"💡 手動で作成してください:")
-                print(f"python3 -m venv {仮想環境パス}")
-                print(f"source {仮想環境パス}/bin/activate")
+                if platform.system() == "Windows":
+                    print(f"python -m venv {仮想環境パス}")
+                    print(f"{仮想環境アクティベーションコマンド取得(仮想環境パス)}")
+                else:
+                    print(f"python3 -m venv {仮想環境パス}")
+                    print(f"{仮想環境アクティベーションコマンド取得(仮想環境パス)}")
                 return False
         else:
             print("⏭️  システム環境で実行します（非推奨）")
@@ -61,8 +91,13 @@ def 仮想環境アクティベーション確認():
         if os.path.exists(".venv"):
             print("⚠️  仮想環境が存在しますが、アクティブではありません")
             print(f"💡 以下のコマンドでアクティベートしてください:")
-            print(f"source .venv/bin/activate")
-            print(f"python3 setup.py")
+            アクティベーションコマンド = 仮想環境アクティベーションコマンド取得(".venv")
+            if platform.system() == "Windows":
+                print(f"{アクティベーションコマンド}")
+                print(f"python setup.py")
+            else:
+                print(f"{アクティベーションコマンド}")
+                print(f"python3 setup.py")
         else:
             print("⚠️  仮想環境を使用していません（システム環境で実行）")
         return False
@@ -102,7 +137,8 @@ def 必須パッケージインストール():
             if os.path.exists(".venv") and not is_venv_active:
                 print("⚠️  仮想環境をアクティベートしてから再実行してください")
                 print("以下のコマンドを実行してください:")
-                print("source .venv/bin/activate && python3 setup.py")
+                実行コマンド = 仮想環境実行コマンド生成(".venv", "python setup.py" if platform.system() == "Windows" else "python3 setup.py")
+                print(実行コマンド)
                 return False
             
             subprocess.check_call([
@@ -118,9 +154,14 @@ def 必須パッケージインストール():
                 print("💡 システム環境での直接インストールが制限されています")
                 print("🔧 解決方法:")
                 print("1. 仮想環境を作成してアクティベート:")
-                print("   python3 -m venv .venv")
-                print("   source .venv/bin/activate")
-                print("   python3 setup.py")
+                if platform.system() == "Windows":
+                    print("   python -m venv .venv")
+                    print(f"   {仮想環境アクティベーションコマンド取得('.venv')}")
+                    print("   python setup.py")
+                else:
+                    print("   python3 -m venv .venv")
+                    print(f"   {仮想環境アクティベーションコマンド取得('.venv')}")
+                    print("   python3 setup.py")
                 print("2. または --break-system-packages を使用:")
                 print(f"   pip install --break-system-packages {' '.join(インストール必要)}")
             else:
@@ -204,33 +245,53 @@ def 実行例表示():
             print(f"# ✅ 仮想環境アクティブ - そのまま実行可能")
         else:
             print(f"# 🔧 仮想環境をアクティベートしてから実行")
-            print(f"source .venv/bin/activate")
+            アクティベーションコマンド = 仮想環境アクティベーションコマンド取得(".venv")
+            print(f"{アクティベーションコマンド}")
             print(f"")
         
         print(f"# 📍 ワンコマンド全自動実行（推奨）")
         if is_venv_active:
-            print(f"python3 全自動実行.py")
+            if platform.system() == "Windows":
+                print(f"python 全自動実行.py")
+            else:
+                print(f"python3 全自動実行.py")
         else:
-            print(f"source .venv/bin/activate && python3 全自動実行.py")
+            実行コマンド = 仮想環境実行コマンド生成(".venv", "python 全自動実行.py" if platform.system() == "Windows" else "python3 全自動実行.py")
+            print(f"{実行コマンド}")
         print(f"")
         
         print(f"# 📍 ステップバイステップ実行")
         if is_venv_active:
-            print(f"python3 core/scopus解析.py")
+            if platform.system() == "Windows":
+                print(f"python core\\scopus解析.py")
+            else:
+                print(f"python3 core/scopus解析.py")
         else:
-            print(f"source .venv/bin/activate && python3 core/scopus解析.py")
+            コアスクリプト = "core\\scopus解析.py" if platform.system() == "Windows" else "core/scopus解析.py"
+            実行コマンド = 仮想環境実行コマンド生成(".venv", f"python {コアスクリプト}" if platform.system() == "Windows" else f"python3 {コアスクリプト}")
+            print(f"{実行コマンド}")
         print(f"")
         
         print(f"# 📍 PDF取得")
         if is_venv_active:
-            print(f"python3 pdf_tools/PDF取得.py")
+            if platform.system() == "Windows":
+                print(f"python pdf_tools\\PDF取得.py")
+            else:
+                print(f"python3 pdf_tools/PDF取得.py")
         else:
-            print(f"source .venv/bin/activate && python3 pdf_tools/PDF取得.py")
+            PDFスクリプト = "pdf_tools\\PDF取得.py" if platform.system() == "Windows" else "pdf_tools/PDF取得.py"
+            実行コマンド = 仮想環境実行コマンド生成(".venv", f"python {PDFスクリプト}" if platform.system() == "Windows" else f"python3 {PDFスクリプト}")
+            print(f"{実行コマンド}")
     else:
         print(f"# ⚠️  システム環境で実行")
-        print(f"python3 全自動実行.py")
-        print(f"python3 core/scopus解析.py")
-        print(f"python3 pdf_tools/PDF取得.py")
+        if platform.system() == "Windows":
+            print(f"python 全自動実行.py")
+            print(f"python core\\scopus解析.py")
+            print(f"python pdf_tools\\PDF取得.py")
+        else:
+            print(f"python3 全自動実行.py")
+            print(f"python3 core/scopus解析.py")
+            print(f"python3 pdf_tools/PDF取得.py")
 
 def main():
     """メイン処理"""

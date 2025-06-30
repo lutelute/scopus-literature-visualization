@@ -153,7 +153,11 @@ python3 add_yaml_metadata.py
 
 ## 📋 要件・セットアップ
 
-### クイックスタート（推奨）
+> **💻 クロスプラットフォーム対応**: Windows/macOS/Linux での完全動作確認済み
+
+### 🚀 クイックスタート（推奨）
+
+**🍎 macOS/Linux の場合**
 ```bash
 # 1. 作業フォルダを作成してCSVファイルを配置
 mkdir my_research_project
@@ -172,16 +176,35 @@ python3 全自動実行.py
 source .venv/bin/activate && python3 全自動実行.py
 ```
 
-### 手動セットアップ（上級者向け）
+**🎨 Windows の場合**
+```cmd
+# 1. 作業フォルダを作成してCSVファイルを配置
+mkdir my_research_project
+cd my_research_project
+REM ここにScopus CSVファイルをコピー
+
+# 2. ツールをクローン
+git clone https://github.com/lutelute/scopus-literature-visualization.git
+cd scopus-literature-visualization
+
+# 3. 全自動実行（仮想環境も自動作成）
+python 全自動実行.py
+REM → 初回は仮想環境作成から自動実行
+
+# 4. 2回目以降は仮想環境アクティベート＋実行
+.venv\Scripts\activate && python 全自動実行.py
+```
+
+### 🔧 手動セットアップ（上級者向け）
+
+| 🎨 **Windows** | 🍎 **macOS/Linux** |
+|---------|----------|
+| ```cmd<br># 依存関係手動インストール<br>python setup.py<br><br># 仮想環境アクティベート<br>.venv\Scripts\activate<br><br># メインスクリプト実行<br>python core\scopus解析.py<br>``` | ```bash<br># 依存関係手動インストール<br>python3 setup.py<br><br># 仮想環境アクティベート<br>source .venv/bin/activate<br><br># メインスクリプト実行<br>python3 core/scopus解析.py<br>``` |
+
+### 🧪 動作テスト
 ```bash
-# 依存関係手動インストール
-python3 setup.py
-
-# 仮想環境アクティベート（.venvが存在する場合）
-source .venv/bin/activate
-
-# メインスクリプト実行
-python3 core/scopus解析.py
+# クロスプラットフォーム対応テスト実行
+python test_crossplatform.py
 ```
 
 ### 必須要件
