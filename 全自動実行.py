@@ -46,6 +46,100 @@ def 依存関係チェック():
         print("✅ 必須パッケージは全てインストール済み")
         return True
 
+def オプションライブラリチェック():
+    """オプションライブラリの確認と自動インストール提案"""
+    print("\n🔍 拡張機能チェック中...")
+    
+    オプションパッケージ = {
+        'aiohttp': {
+            'name': 'aiohttp + async_timeout',
+            'description': '高速並列処理機能（DOI解決が3倍高速化）',
+            'packages': ['aiohttp', 'async_timeout']
+        },
+        'nltk': {
+            'name': 'NLTK',
+            'description': '高度なキーワード分析機能（より精密な分析）',
+            'packages': ['nltk']
+        }
+    }
+    
+    未インストール拡張 = {}
+    for key, info in オプションパッケージ.items():
+        for pkg in info['packages']:
+            spec = importlib.util.find_spec(pkg)
+            if spec is None:
+                if key not in 未インストール拡張:
+                    未インストール拡張[key] = info
+                break
+    
+    if not 未インストール拡張:
+        print("✅ 全ての拡張機能が利用可能です")
+        return True
+    
+    print(f"💡 利用可能な拡張機能:")
+    for key, info in 未インストール拡張.items():
+        print(f"   🚀 {info['name']}: {info['description']}")
+    
+    print(f"\n⚙️  これらの拡張機能を仮想環境にインストールしますか？")
+    print(f"   (処理速度と分析品質が大幅に向上します)")
+    
+    try:
+        回答 = input("拡張機能をインストールしますか？ (y/n): ").lower().strip()
+        if 回答 in ['y', 'yes']:
+            return 拡張機能インストール(未インストール拡張)
+        else:
+            print("⏭️  基本機能のみで実行します")
+            return True
+    except KeyboardInterrupt:
+        print("\n⏹️  中断されました")
+        return False
+
+def 拡張機能インストール(未インストール拡張):
+    """拡張機能の自動インストール"""
+    print(f"\n🔧 拡張機能をインストール中...")
+    
+    インストール成功 = True
+    for key, info in 未インストール拡張.items():
+        print(f"\n📦 {info['name']} をインストール中...")
+        
+        try:
+            インストールパッケージ = ' '.join(info['packages'])
+            結果 = subprocess.run([
+                sys.executable, '-m', 'pip', 'install', 
+                '--quiet', '--disable-pip-version-check'
+            ] + info['packages'], 
+            capture_output=True, text=True, check=True)
+            
+            print(f"✅ {info['name']} インストール完了")
+            
+            # NLTKの場合、追加リソースも自動ダウンロード
+            if key == 'nltk':
+                print("📚 NLTK追加リソースをダウンロード中...")
+                try:
+                    import nltk
+                    nltk.download('punkt', quiet=True)
+                    nltk.download('averaged_perceptron_tagger_eng', quiet=True)
+                    nltk.download('wordnet', quiet=True)
+                    print("✅ NLTK追加リソース完了")
+                except Exception as e:
+                    print(f"⚠️  NLTK追加リソースの一部でエラー: {e}")
+        
+        except subprocess.CalledProcessError as e:
+            print(f"❌ {info['name']} インストール失敗: {e}")
+            インストール成功 = False
+        except Exception as e:
+            print(f"❌ {info['name']} インストールエラー: {e}")
+            インストール成功 = False
+    
+    if インストール成功:
+        print(f"\n🎉 全拡張機能のインストールが完了しました！")
+        print(f"⚡ 処理速度と分析品質が向上します")
+    else:
+        print(f"\n⚠️  一部の拡張機能でエラーが発生しました")
+        print(f"💡 基本機能で処理を続行します")
+    
+    return True
+
 def CSV確認():
     """CSVファイルの存在確認"""
     print("\n📄 CSVファイルをチェック中...")
@@ -92,9 +186,18 @@ def main():
     
     # 1. 環境チェック
     print(f"\n{'='*20} 1️⃣  環境チェック {'='*20}")
-    if not 依存関係チェック() or not CSV確認():
-        print("\n❌ 環境チェックに失敗しました。上記の解決方法を試してください。")
+    if not 依存関係チェック():
+        print("\n❌ 必須パッケージが不足しています。上記の解決方法を試してください。")
         return
+    
+    if not オプションライブラリチェック():
+        print("\n❌ 拡張機能チェックで問題が発生しました。")
+        return
+    
+    if not CSV確認():
+        print("\n❌ CSVファイルチェックに失敗しました。上記の解決方法を試してください。")
+        return
+    
     成功ステップ += 1
     
     # パイプライン実行
