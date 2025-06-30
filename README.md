@@ -48,24 +48,42 @@ Scopus論文データベースから取得した文献情報を可視化する�
 
 ### 🎯 ワンコマンド全自動実行（推奨）
 
-**最も簡単な方法**
+**🔧 初回セットアップ（1回だけ）**
+```bash
+# 1. セットアップ実行（仮想環境作成＋パッケージインストール）
+python3 setup.py
+
+# 2. 仮想環境アクティベート＋全自動実行
+source .venv/bin/activate && python3 全自動実行.py
+```
+
+**⚡ 2回目以降（簡単）**
 ```bash
 # 仮想環境アクティベート + 全自動実行
 source .venv/bin/activate && python3 全自動実行.py
 ```
 
+**🤖 さらに簡単（自動セットアップ）**
+```bash
+# setup.py を先に実行せずに全自動実行（推奨）
+python3 全自動実行.py
+# → 仮想環境がなければ自動でsetup.pyを実行
+```
+
 **処理内容**:
-1. 環境チェック・依存関係確認
-2. CSVファイル結合
-3. DOI完全情報取得
-4. Markdown生成・参考文献解決
-5. キーワード分析・抽出
-6. YAMLメタデータ追加
+1. 仮想環境チェック・自動作成
+2. 環境チェック・依存関係確認
+3. CSVファイル結合
+4. DOI完全情報取得
+5. Markdown生成・参考文献解決
+6. キーワード分析・抽出
+7. YAMLメタデータ追加
 
 **実行例**:
 ```
 🚀 Scopus文献可視化システム - 全自動実行
 ============================================================
+✅ 仮想環境がアクティブです
 ✅ 必須パッケージは全てインストール済み
 ✅ 1個のCSVファイルを発見: scopus_export.csv
 ✅ 2️⃣  CSVファイル結合 完了 (0.6秒)
@@ -130,15 +148,15 @@ cd my_research_project
 # ここにScopus CSVファイルをコピー
 
 # 2. ツールをクローン
-git clone https://github.com/YOUR_USERNAME/scopus-literature-visualization.git
+git clone https://github.com/lutelute/scopus-literature-visualization.git
 cd scopus-literature-visualization
 
-# 3a. 仮想環境使用（推奨）
-source .venv/bin/activate  # 仮想環境アクティベート
-python3 core/scopus解析.py
+# 3. 全自動実行（仮想環境も自動作成）
+python3 全自動実行.py
+# → 初回は仮想環境作成から自動実行
 
-# 3b. または、ワンコマンド実行
-python3 run.py
+# 4. 2回目以降は仮想環境アクティベート＋実行
+source .venv/bin/activate && python3 全自動実行.py
 ```
 
 ### 手動セットアップ（上級者向け）

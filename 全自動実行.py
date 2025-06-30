@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 import importlib.util
+import venv
 
 def banner():
     """バナー表示"""
@@ -24,6 +25,50 @@ def banner():
     print("   6️⃣  YAMLメタデータ追加")
     print("   💡 PDF取得は別途実行: python3 pdf_tools/PDF取得.py")
     print("=" * 60)
+
+def 仮想環境チェック():
+    """仮想環境の状況を確認"""
+    print("\n🔍 実行環境をチェック中...")
+    
+    # 仮想環境がアクティブかチェック
+    is_venv_active = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+    
+    if os.path.exists(".venv"):
+        if is_venv_active:
+            print("✅ 仮想環境がアクティブです")
+            return True
+        else:
+            print("❌ 仮想環境が存在しますが、アクティブではありません")
+            print("🔧 解決方法:")
+            print("   source .venv/bin/activate && python3 全自動実行.py")
+            print("   または setup.py を先に実行してください")
+            return False
+    else:
+        print("⚠️  仮想環境が見つかりません")
+        print("🔧 解決方法:")
+        print("   1. python3 setup.py を先に実行")
+        print("   2. source .venv/bin/activate && python3 全自動実行.py")
+        print("\n自動で setup.py を実行しますか？")
+        
+        try:
+            回答 = input("setup.py を実行しますか？ (y/n): ").lower().strip()
+            if 回答 in ['y', 'yes']:
+                print("\n🔧 setup.py を実行中...")
+                try:
+                    結果 = subprocess.run([sys.executable, "setup.py"], check=True)
+                    print("✅ setup.py 実行完了")
+                    print("⚠️  仮想環境をアクティベートしてから再実行してください:")
+                    print("source .venv/bin/activate && python3 全自動実行.py")
+                    return False
+                except subprocess.CalledProcessError:
+                    print("❌ setup.py 実行失敗")
+                    return False
+            else:
+                print("⏭️  仮想環境なしで実行します（非推奨）")
+                return True
+        except KeyboardInterrupt:
+            print("\n⏹️  中断されました")
+            return False
 
 def 依存関係チェック():
     """必須パッケージの確認"""
@@ -186,6 +231,12 @@ def main():
     
     # 1. 環境チェック
     print(f"\n{'='*20} 1️⃣  環境チェック {'='*20}")
+    
+    # 仮想環境チェック
+    if not 仮想環境チェック():
+        print("\n❌ 実行環境のセットアップが必要です。")
+        return
+    
     if not 依存関係チェック():
         print("\n❌ 必須パッケージが不足しています。上記の解決方法を試してください。")
         return

@@ -8,11 +8,64 @@ import os
 import sys
 import subprocess
 import importlib.util
+import venv
+import shutil
 
 def パッケージ確認(パッケージ名: str) -> bool:
     """パッケージがインストールされているかチェック"""
     spec = importlib.util.find_spec(パッケージ名)
     return spec is not None
+
+def 仮想環境チェック作成():
+    """仮想環境の存在チェックと自動作成"""
+    仮想環境パス = ".venv"
+    
+    print("🔍 仮想環境をチェック中...")
+    
+    if os.path.exists(仮想環境パス):
+        print("✅ 仮想環境が既に存在します")
+        return True
+    
+    print("📦 仮想環境が見つかりません。作成しますか？")
+    print("   (推奨: パッケージの依存関係競合を避けるため)")
+    
+    try:
+        回答 = input("仮想環境を作成しますか？ (y/n): ").lower().strip()
+        if 回答 in ['y', 'yes']:
+            print(f"\n🔧 仮想環境を作成中...")
+            try:
+                venv.create(仮想環境パス, with_pip=True)
+                print(f"✅ 仮想環境作成完了: {仮想環境パス}")
+                print(f"\n💡 次回から以下のコマンドで実行してください:")
+                print(f"source {仮想環境パス}/bin/activate && python3 setup.py")
+                return True
+            except Exception as e:
+                print(f"❌ 仮想環境作成失敗: {e}")
+                print(f"💡 手動で作成してください:")
+                print(f"python3 -m venv {仮想環境パス}")
+                print(f"source {仮想環境パス}/bin/activate")
+                return False
+        else:
+            print("⏭️  システム環境で実行します（非推奨）")
+            return True
+    except KeyboardInterrupt:
+        print("\n⏹️  中断されました")
+        return False
+
+def 仮想環境アクティベーション確認():
+    """仮想環境がアクティブかチェック"""
+    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+        print("✅ 仮想環境がアクティブです")
+        return True
+    else:
+        if os.path.exists(".venv"):
+            print("⚠️  仮想環境が存在しますが、アクティブではありません")
+            print(f"💡 以下のコマンドでアクティベートしてください:")
+            print(f"source .venv/bin/activate")
+            print(f"python3 setup.py")
+        else:
+            print("⚠️  仮想環境を使用していません（システム環境で実行）")
+        return False
 
 def 必須パッケージインストール():
     """必須パッケージの自動インストール"""
@@ -40,15 +93,39 @@ def 必須パッケージインストール():
     
     if インストール必要:
         print(f"\n📦 {len(インストール必要)}個のパッケージをインストールします...")
+        
+        # 仮想環境アクティベーション状況をチェック
+        is_venv_active = 仮想環境アクティベーション確認()
+        
         try:
+            # 仮想環境がある場合はアクティベーションを促す
+            if os.path.exists(".venv") and not is_venv_active:
+                print("⚠️  仮想環境をアクティベートしてから再実行してください")
+                print("以下のコマンドを実行してください:")
+                print("source .venv/bin/activate && python3 setup.py")
+                return False
+            
             subprocess.check_call([
-                sys.executable, '-m', 'pip', 'install'
+                sys.executable, '-m', 'pip', 'install', 
+                '--quiet', '--disable-pip-version-check'
             ] + インストール必要)
             print("✅ 必須パッケージのインストール完了")
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
             print("❌ パッケージインストールに失敗しました")
-            print("手動でインストールしてください:")
-            print(f"pip install {' '.join(インストール必要)}")
+            
+            # エラーがexternally-managed-environmentの場合は特別な案内
+            if "externally-managed-environment" in str(e):
+                print("💡 システム環境での直接インストールが制限されています")
+                print("🔧 解決方法:")
+                print("1. 仮想環境を作成してアクティベート:")
+                print("   python3 -m venv .venv")
+                print("   source .venv/bin/activate")
+                print("   python3 setup.py")
+                print("2. または --break-system-packages を使用:")
+                print(f"   pip install --break-system-packages {' '.join(インストール必要)}")
+            else:
+                print("手動でインストールしてください:")
+                print(f"pip install {' '.join(インストール必要)}")
             return False
     else:
         print("✅ 必須パッケージは全てインストール済みです")
@@ -118,17 +195,42 @@ def 実行例表示():
     """実行例を表示"""
     print(f"\n🚀 セットアップ完了！以下のコマンドで実行してください:")
     print(f"")
-    print(f"# 日本語版（推奨）")
-    print(f"python3 core/scopus解析.py")
-    print(f"")
-    print(f"# 英語版")
-    print(f"python3 main.py")
-    print(f"")
-    print(f"# PDF取得")
-    print(f"python3 pdf_tools/PDF取得.py")
-    print(f"")
-    print(f"# 開発・テスト用")
-    print(f"python3 dev_tools/進行状況確認.py")
+    
+    # 仮想環境の状況に応じて表示を分ける
+    if os.path.exists(".venv"):
+        is_venv_active = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+        
+        if is_venv_active:
+            print(f"# ✅ 仮想環境アクティブ - そのまま実行可能")
+        else:
+            print(f"# 🔧 仮想環境をアクティベートしてから実行")
+            print(f"source .venv/bin/activate")
+            print(f"")
+        
+        print(f"# 📍 ワンコマンド全自動実行（推奨）")
+        if is_venv_active:
+            print(f"python3 全自動実行.py")
+        else:
+            print(f"source .venv/bin/activate && python3 全自動実行.py")
+        print(f"")
+        
+        print(f"# 📍 ステップバイステップ実行")
+        if is_venv_active:
+            print(f"python3 core/scopus解析.py")
+        else:
+            print(f"source .venv/bin/activate && python3 core/scopus解析.py")
+        print(f"")
+        
+        print(f"# 📍 PDF取得")
+        if is_venv_active:
+            print(f"python3 pdf_tools/PDF取得.py")
+        else:
+            print(f"source .venv/bin/activate && python3 pdf_tools/PDF取得.py")
+    else:
+        print(f"# ⚠️  システム環境で実行")
+        print(f"python3 全自動実行.py")
+        print(f"python3 core/scopus解析.py")
+        print(f"python3 pdf_tools/PDF取得.py")
 
 def main():
     """メイン処理"""
@@ -142,6 +244,11 @@ def main():
         sys.exit(1)
     else:
         print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} 対応")
+    
+    # 仮想環境チェック・作成
+    if not 仮想環境チェック作成():
+        print("❌ 仮想環境セットアップに失敗しました")
+        sys.exit(1)
     
     # パッケージインストール
     if not 必須パッケージインストール():
