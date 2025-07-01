@@ -209,12 +209,14 @@ python test_crossplatform.py
 
 ### 必須要件
 - **Python 3.8+** (Python 3.7は2023年6月でサポート終了)
+- **⚠️  Python 3.9非対応**: 既知の問題により除外（3.8, 3.10, 3.11, 3.12推奨）
 - **インターネット接続**（Crossref API, Unpaywall API使用）
 
 ### 🤖 CI/CD環境対応
 - **GitHub Actions**: 自動テスト対応（非対話的実行）
 - **クロスプラットフォーム**: Windows/macOS/Linux完全対応
 - **CI環境自動検出**: EOFError回避、デフォルト値自動適用
+- **テスト対象**: Python 3.8, 3.10, 3.11, 3.12（3.9除外）
 
 ### 自動インストールされる依存関係
 - `pandas`: CSVデータ処理
