@@ -19,6 +19,33 @@ def safe_filename(title: str, maxlen: int = 120) -> str:
     s = re.sub(r"_+", "_", s)[:maxlen]
     return s or "untitled"
 
+def extract_title_keywords_comprehensive(title: str) -> list:
+    """タイトルから包括的にキーワードを抽出"""
+    if not title:
+        return []
+    
+    keywords = []
+    stop_words = {'the', 'and', 'for', 'with', 'from', 'using', 'based', 'study', 'analysis', 'review'}
+    
+    # 基本的な単語抽出（3文字以上）
+    basic_words = re.findall(r'\b[a-zA-Z]{3,}\b', title.lower())
+    filtered_words = [w for w in basic_words if w not in stop_words]
+    keywords.extend(filtered_words)
+    
+    # 技術用語・複合語の抽出（ハイフンやアンダースコアで繋がった語）
+    compound_words = re.findall(r'\b[a-zA-Z]+[_-][a-zA-Z]+(?:[_-][a-zA-Z]+)*\b', title.lower())
+    keywords.extend(compound_words)
+    
+    # 数値を含む専門用語（例：5G, CO2, IEEE802など）
+    tech_terms = re.findall(r'\b[a-zA-Z]*\d+[a-zA-Z]*\b', title)
+    keywords.extend([t.lower() for t in tech_terms if len(t) >= 2])
+    
+    # 大文字の略語（例：AI, ML, IoTなど）
+    acronyms = re.findall(r'\b[A-Z]{2,}\b', title)
+    keywords.extend([a.lower() for a in acronyms])
+    
+    return list(set(keywords))  # 重複削除
+
 def extract_main_keywords(json_data: dict) -> list:
     """メイン論文のキーワードを抽出"""
     keywords = []
@@ -29,12 +56,10 @@ def extract_main_keywords(json_data: dict) -> list:
     if subjects:
         keywords.extend(subjects)
     
-    # タイトルから重要キーワード抽出
+    # タイトルから包括的キーワード抽出
     title = json_data.get('title', '')
     if title:
-        # 基本的なキーワード抽出（簡易版）
-        title_words = re.findall(r'\b[A-Za-z]{3,}\b', title.lower())
-        title_keywords = [w for w in title_words if w not in ['the', 'and', 'for', 'with', 'from']][:5]
+        title_keywords = extract_title_keywords_comprehensive(title)
         keywords.extend(title_keywords)
     
     return list(set(keywords))  # 重複削除
@@ -122,6 +147,23 @@ def add_main_paper_doi_section(json_data: dict) -> str:
     
     return doi_section
 
+def create_hashtag_section(keywords: list) -> str:
+    """キーワードからハッシュタグセクションを生成"""
+    if not keywords:
+        return ""
+    
+    # キーワードをハッシュタグ形式に変換
+    hashtags = []
+    for keyword in keywords:
+        # 既に#で始まっている場合はそのまま、そうでなければ#を付加
+        if not keyword.startswith('#'):
+            hashtags.append(f"#{keyword}")
+        else:
+            hashtags.append(keyword)
+    
+    # ハッシュタグを適切に整形
+    return " ".join(hashtags)
+
 def update_markdown_with_yaml(json_path: str, md_dir: str) -> None:
     """MarkdownファイルにYAMLメタデータと論文情報を追加"""
     with open(json_path, 'r', encoding='utf-8') as f:
@@ -148,14 +190,30 @@ def update_markdown_with_yaml(json_path: str, md_dir: str) -> None:
     # メイン論文のDOI情報セクション生成
     doi_section = add_main_paper_doi_section(data)
     
+    # キーワードからハッシュタグセクション生成
+    main_keywords = extract_main_keywords(data)
+    hashtag_section = ""
+    if main_keywords:
+        hashtag_content = create_hashtag_section(main_keywords)
+        if hashtag_content:
+            hashtag_section = f"\n\n## Keywords\n\n{hashtag_content}"
+    
     # コンテンツを更新
     # タグ行を削除（YAMLのkeywordsで代替）
     content_lines = content.split('\n')
     if content_lines[0].startswith('#'):
         content_lines = content_lines[1:]  # タグ行を削除
     
-    # 論文情報セクションを適切な位置に挿入
+    # 既存のKeywordsセクションがあるかチェック
     updated_content = '\n'.join(content_lines)
+    if "## Keywords" not in updated_content and hashtag_section:
+        # Keywordsセクションを追加（AbstractとDOI情報の間に挿入）
+        if "## Abstract" in updated_content:
+            updated_content = updated_content.replace("## Abstract", hashtag_section + "\n\n## Abstract")
+        else:
+            updated_content = hashtag_section + "\n\n" + updated_content
+    
+    # 論文情報セクションを適切な位置に挿入
     if "## 参考文献" in updated_content:
         updated_content = updated_content.replace("## 参考文献", doi_section + "\n\n## 参考文献")
     else:
@@ -168,7 +226,7 @@ def update_markdown_with_yaml(json_path: str, md_dir: str) -> None:
     with open(md_path, 'w', encoding='utf-8') as f:
         f.write(final_content)
     
-    print(f"Updated: {md_filename} - YAML frontmatter and DOI info added")
+    print(f"Updated: {md_filename} - YAML frontmatter, hashtags, and DOI info added")
 
 def main():
     """メイン処理"""
