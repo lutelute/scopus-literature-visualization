@@ -13,6 +13,22 @@ import venv
 import platform
 import time
 
+def CI環境チェック() -> bool:
+    """CI環境かどうかをチェック"""
+    ci_環境変数 = ['CI', 'GITHUB_ACTIONS', 'TRAVIS', 'CIRCLECI', 'JENKINS_URL']
+    return any(os.getenv(var) for var in ci_環境変数)
+
+def 安全なinput(プロンプト: str, デフォルト: str = "y", CI環境: bool = False) -> str:
+    """CI環境対応の安全なinput関数"""
+    if CI環境:
+        print(f"{プロンプト}（CI環境のため自動選択: {デフォルト}）")
+        return デフォルト
+    try:
+        return input(プロンプト).lower().strip()
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n入力が検出されませんでした。デフォルト値を使用: {デフォルト}")
+        return デフォルト
+
 def パッケージ確認(パッケージ名: str) -> bool:
     """パッケージがインストールされているかチェック"""
     spec = importlib.util.find_spec(パッケージ名)
@@ -65,20 +81,22 @@ def 仮想環境作成および設定(仮想環境パス: str = ".venv", 自動�
         print("📦 仮想環境が見つかりません。作成しますか？")
         print("   (推奨: パッケージの依存関係競合を避けるため)")
         
-        try:
-            if 自動実行:
-                print("自動実行モード: 仮想環境を作成します")
-                return 仮想環境新規作成(仮想環境パス)
-            
-            回答 = input("仮想環境を作成しますか？ (y/n): ").lower().strip()
-            if 回答 in ['y', 'yes']:
-                return 仮想環境新規作成(仮想環境パス)
-            else:
-                print("⏭️  システム環境で実行します（非推奨）")
-                return システム環境パッケージインストール()
-        except (KeyboardInterrupt, EOFError):
-            print("\n🤖 自動実行モード: 仮想環境を作成します")
+        # CI環境チェック
+        ci環境 = CI環境チェック()
+        if ci環境:
+            print("🤖 CI環境を検出 - 自動実行モードで動作します")
+            自動実行 = True
+        
+        if 自動実行:
+            print("自動実行モード: 仮想環境を作成します")
             return 仮想環境新規作成(仮想環境パス)
+        
+        回答 = 安全なinput("仮想環境を作成しますか？ (y/n): ", "y", ci環境)
+        if 回答 in ['y', 'yes']:
+            return 仮想環境新規作成(仮想環境パス)
+        else:
+            print("⏭️  システム環境で実行します（非推奨）")
+            return システム環境パッケージインストール()
     
     # 既存仮想環境のパッケージチェックとインストール
     return 仮想環境パッケージ管理(仮想環境パス)
@@ -207,7 +225,8 @@ def 仮想環境パッケージ管理(仮想環境パス: str) -> bool:
                 print(f"  - {パッケージ}: キーワード分析が高精度化（品詞解析）")
         
         try:
-            回答 = input("\nオプションパッケージをインストールしますか？ (y/n): ").lower().strip()
+            ci環境 = CI環境チェック()
+            回答 = 安全なinput("\nオプションパッケージをインストールしますか？ (y/n): ", "y", ci環境)
             if 回答 in ['y', 'yes']:
                 print(f"📦 オプションパッケージインストール中...")
                 subprocess.run([

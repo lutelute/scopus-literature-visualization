@@ -211,6 +211,11 @@ python test_crossplatform.py
 - **Python 3.8+** (Python 3.7は2023年6月でサポート終了)
 - **インターネット接続**（Crossref API, Unpaywall API使用）
 
+### 🤖 CI/CD環境対応
+- **GitHub Actions**: 自動テスト対応（非対話的実行）
+- **クロスプラットフォーム**: Windows/macOS/Linux完全対応
+- **CI環境自動検出**: EOFError回避、デフォルト値自動適用
+
 ### 自動インストールされる依存関係
 - `pandas`: CSVデータ処理
 - `requests`: API通信

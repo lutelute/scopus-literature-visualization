@@ -21,6 +21,22 @@ try:
 except ImportError:
     EMAIL_AVAILABLE = False
 
+def CI環境チェック() -> bool:
+    """CI環境かどうかをチェック"""
+    ci_環境変数 = ['CI', 'GITHUB_ACTIONS', 'TRAVIS', 'CIRCLECI', 'JENKINS_URL']
+    return any(os.getenv(var) for var in ci_環境変数)
+
+def 安全なinput(プロンプト: str, デフォルト: str = "n", CI環境: bool = False) -> str:
+    """CI環境対応の安全なinput関数"""
+    if CI環境:
+        print(f"{プロンプト}（CI環境のため自動選択: {デフォルト}）")
+        return デフォルト
+    try:
+        return input(プロンプト).lower().strip()
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n入力が検出されませんでした。デフォルト値を使用: {デフォルト}")
+        return デフォルト
+
 def banner():
     """バナー表示"""
     print("🚀 Scopus文献可視化システム - 全自動実行")
@@ -70,7 +86,8 @@ def 仮想環境チェック():
             print("🔧 手動で実行してください: python3 setup.py")
             print("⚠️  それでも続行しますか？（仮想環境なし・非推奨）")
             try:
-                回答 = input("仮想環境なしで続行しますか？ (y/n): ").lower().strip()
+                ci環境 = CI環境チェック()
+                回答 = 安全なinput("仮想環境なしで続行しますか？ (y/n): ", "n", ci環境)
                 if 回答 in ['y', 'yes']:
                     print("⏭️  仮想環境なしで実行します（非推奨）")
                     return True
@@ -143,7 +160,8 @@ def オプションライブラリチェック():
     print(f"   (処理速度と分析品質が大幅に向上します)")
     
     try:
-        回答 = input("拡張機能をインストールしますか？ (y/n): ").lower().strip()
+        ci環境 = CI環境チェック()
+        回答 = 安全なinput("拡張機能をインストールしますか？ (y/n): ", "y", ci環境)
         if 回答 in ['y', 'yes']:
             return 拡張機能インストール(未インストール拡張)
         else:
@@ -271,16 +289,21 @@ def メール通知オプション確認():
     設定済み, 状況 = メール設定状況確認()
     print(f"📧 メール設定: {状況}")
     
+    ci環境 = CI環境チェック()
+    
     if 設定済み:
         try:
-            回答 = input("完了時にメール通知を送信しますか？ (y/n): ").lower().strip()
+            回答 = 安全なinput("完了時にメール通知を送信しますか？ (y/n): ", "n", ci環境)
             return 回答 in ['y', 'yes']
         except KeyboardInterrupt:
             return False
     else:
         print("📋 メール通知を有効にするには設定が必要です")
+        if ci環境:
+            print("CI環境のためメール設定をスキップします")
+            return False
         try:
-            回答 = input("メール設定をセットアップしますか？ (y/n): ").lower().strip()
+            回答 = 安全なinput("メール設定をセットアップしますか？ (y/n): ", "n", ci環境)
             if 回答 in ['y', 'yes']:
                 if メール設定セットアップ():
                     print("✅ メール設定完了！完了時に通知を送信します")
@@ -294,6 +317,11 @@ def メール通知オプション確認():
 def main():
     """メイン処理"""
     banner()
+    
+    # CI環境チェック
+    ci環境 = CI環境チェック()
+    if ci環境:
+        print("🤖 CI環境を検出 - 自動モードで実行します")
     
     全開始時間 = time.time()
     成功ステップ = 0
@@ -367,7 +395,7 @@ def main():
         print(f"   (高速並列処理 - 最大8スレッド)")
         
         try:
-            回答 = input("\nPDF取得を実行しますか？ (y/n): ").lower().strip()
+            回答 = 安全なinput("\nPDF取得を実行しますか？ (y/n): ", "n", ci環境)
             if 回答 in ['y', 'yes']:
                 print(f"\n{'='*50}")
                 print("🔄 7️⃣  オープンアクセスPDF取得")
