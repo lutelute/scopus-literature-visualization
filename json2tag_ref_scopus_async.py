@@ -10,13 +10,20 @@ from urllib.parse import quote_plus
 from typing import Dict, List, Set
 
 # オプションライブラリのインポート（エラーハンドリング付き）
+# Windows環境での文字化け対策
+import sys
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
+
 try:
     import aiohttp, async_timeout
     ASYNC_AVAILABLE = True
-    print("✅ aiohttp利用可能 - 高速並列処理モード")
+    print("OK aiohttp available - high-speed parallel mode")
 except ImportError:
     ASYNC_AVAILABLE = False
-    print("⚠️  aiohttp未インストール - 標準版で実行")
+    print("WARN aiohttp not installed - standard mode")
     import urllib.request
     import urllib.error
 
@@ -24,10 +31,10 @@ try:
     import nltk
     from nltk.tokenize import word_tokenize
     NLTK_AVAILABLE = True
-    print("✅ NLTK利用可能 - 高度なキーワード分析")
+    print("OK NLTK available - advanced keyword analysis")
 except ImportError:
     NLTK_AVAILABLE = False
-    print("⚠️  NLTK未インストール - 基本キーワード分析のみ")
+    print("WARN NLTK not installed - basic keyword analysis only")
 
 from tqdm import tqdm
 
@@ -60,6 +67,7 @@ def ensure_nltk():
         return
         
     for res in [("tokenizers/punkt", "punkt"),
+                ("tokenizers/punkt_tab", "punkt_tab"),
                 ("taggers/averaged_perceptron_tagger_eng", "averaged_perceptron_tagger_eng")]:
         try:
             nltk.data.find(res[0])
@@ -173,7 +181,8 @@ def main():
         ref_dois: Set[str] = set()
         for jf in files:
             try:
-                data = json.load(open(os.path.join(jdir, jf)))
+                with open(os.path.join(jdir, jf), encoding="utf-8") as fp:
+                    data = json.load(fp)
                 for r in data.get("references", []):
                     if isinstance(r, dict) and r.get("DOI"):
                         ref_dois.add(r["DOI"].lower())
@@ -182,7 +191,8 @@ def main():
 
         doi2title: Dict[str, str] = {}
         if os.path.exists("doi_title_cache.json"):
-            doi2title.update(json.load(open("doi_title_cache.json")))
+            with open("doi_title_cache.json", encoding="utf-8") as fp:
+                doi2title.update(json.load(fp))
 
         need = list(ref_dois - doi2title.keys())
         print(f"解決必要 DOI 数: {len(need)}")
@@ -214,7 +224,8 @@ def main():
         bar = tqdm(total=len(files), desc="MD 生成")
         for jf in files:
             try:
-                data = json.load(open(os.path.join(jdir, jf), encoding="utf-8"))
+                with open(os.path.join(jdir, jf), encoding="utf-8") as f:
+                    data = json.load(f)
                 ttl = data.get("title", "")
                 year = data.get("year", "Unknown")
                 if not ttl:
@@ -223,8 +234,13 @@ def main():
 
                 # キーワード抽出（NLTK利用可能時は高度な分析、不可時は基本分析）
                 if NLTK_AVAILABLE:
-                    tags = [t.lower() for t, p in nltk.pos_tag(word_tokenize(ttl))
-                            if p not in STOP_POS and t.lower() not in STOP_TOK]
+                    try:
+                        tags = [t.lower() for t, p in nltk.pos_tag(word_tokenize(ttl))
+                                if p not in STOP_POS and t.lower() not in STOP_TOK]
+                    except:
+                        # NLTKエラー時は基本分析にフォールバック
+                        words = re.findall(r'\b[a-zA-Z]{3,}\b', ttl.lower())
+                        tags = [w for w in words if w not in STOP_TOK]
                 else:
                     # 基本的なキーワード抽出（単語分割のみ）
                     words = re.findall(r'\b[a-zA-Z]{3,}\b', ttl.lower())
