@@ -49,20 +49,20 @@ def 仮想環境実行コマンド生成(仮想環境パス: str, コマンド: 
 def 仮想環境作成および設定(仮想環境パス: str = ".venv", 自動実行: bool = False) -> bool:
     """仮想環境の作成と必須パッケージの自動インストール"""
     
-    print("🔍 仮想環境をチェック中...")
+    print("[INFO] 仮想環境をチェック中...")
     
     # 仮想環境の存在チェック
     if os.path.exists(仮想環境パス):
-        print("✅ 仮想環境が既に存在します")
+        print("[OK] 仮想環境が既に存在します")
         venv_python = 仮想環境Python実行ファイル取得(仮想環境パス)
         
         if os.path.exists(venv_python):
-            print(f"✅ 仮想環境のPython実行ファイル確認: {venv_python}")
+            print(f"[OK] 仮想環境のPython実行ファイル確認: {venv_python}")
         else:
-            print(f"❌ 仮想環境が破損している可能性があります。再作成します...")
+            print(f"[NG] 仮想環境が破損している可能性があります。再作成します...")
             return 仮想環境再作成(仮想環境パス)
     else:
-        print("📦 仮想環境が見つかりません。作成しますか？")
+        print("[PKG] 仮想環境が見つかりません。作成しますか？")
         print("   (推奨: パッケージの依存関係競合を避けるため)")
         
         try:
@@ -85,12 +85,12 @@ def 仮想環境作成および設定(仮想環境パス: str = ".venv", 自動�
 
 def 仮想環境新規作成(仮想環境パス: str) -> bool:
     """新規仮想環境作成とセットアップ"""
-    print(f"\n🔧 仮想環境を作成中...")
+    print(f"\n[SETUP] 仮想環境を作成中...")
     
     try:
         # 仮想環境作成
         venv.create(仮想環境パス, with_pip=True)
-        print(f"✅ 仮想環境作成完了: {仮想環境パス}")
+        print(f"[OK] 仮想環境作成完了: {仮想環境パス}")
         
         # 少し待機（仮想環境初期化のため）
         time.sleep(1)
@@ -99,8 +99,8 @@ def 仮想環境新規作成(仮想環境パス: str) -> bool:
         return 仮想環境パッケージ管理(仮想環境パス)
         
     except Exception as e:
-        print(f"❌ 仮想環境作成失敗: {e}")
-        print(f"💡 手動で作成してください:")
+        print(f"[NG] 仮想環境作成失敗: {e}")
+        print(f"[HINT] 手動で作成してください:")
         if platform.system() == "Windows":
             print(f"python -m venv {仮想環境パス}")
             print(f"{仮想環境アクティベーションコマンド取得(仮想環境パス)}")
@@ -116,24 +116,24 @@ def 仮想環境再作成(仮想環境パス: str) -> bool:
     
     try:
         shutil.rmtree(仮想環境パス)
-        print(f"✅ 削除完了")
+        print(f"[OK] 削除完了")
         return 仮想環境新規作成(仮想環境パス)
     except Exception as e:
-        print(f"❌ 削除失敗: {e}")
+        print(f"[NG] 削除失敗: {e}")
         return False
 
 def 仮想環境パッケージ管理(仮想環境パス: str) -> bool:
     """仮想環境内でのパッケージ管理"""
-    print(f"\n📦 仮想環境内パッケージをチェック中...")
+    print(f"\n[PKG] 仮想環境内パッケージをチェック中...")
     
     # 仮想環境のPython実行ファイルパス取得
     venv_python = 仮想環境Python実行ファイル取得(仮想環境パス)
     
     if not os.path.exists(venv_python):
-        print(f"❌ 仮想環境のPython実行ファイルが見つかりません: {venv_python}")
+        print(f"[NG] 仮想環境のPython実行ファイルが見つかりません: {venv_python}")
         return False
     
-    print(f"✅ 仮想環境Python: {venv_python}")
+    print(f"[OK] 仮想環境Python: {venv_python}")
     
     # 必須パッケージ定義
     必須パッケージ = ['pandas', 'requests', 'requests_cache', 'tqdm']
@@ -149,39 +149,39 @@ def 仮想環境パッケージ管理(仮想環境パス: str) -> bool:
             ], capture_output=True, text=True)
             
             if 結果.returncode == 0:
-                print(f"  ✅ {パッケージ} - インストール済み")
+                print(f"  [OK] {パッケージ} - インストール済み")
             else:
-                print(f"  ❌ {パッケージ} - 未インストール")
+                print(f"  [NG] {パッケージ} - 未インストール")
                 インストール必要.append(パッケージ)
         except Exception:
-            print(f"  ❌ {パッケージ} - 未インストール")
+            print(f"  [NG] {パッケージ} - 未インストール")
             インストール必要.append(パッケージ)
     
     # 必要に応じてパッケージインストール
     if インストール必要:
-        print(f"\n📦 {len(インストール必要)}個のパッケージを仮想環境にインストールします...")
+        print(f"\n[PKG] {len(インストール必要)}個のパッケージを仮想環境にインストールします...")
         
         try:
             # pipアップグレード
-            print("📦 pipを最新版にアップグレード中...")
+            print("[PKG] pipを最新版にアップグレード中...")
             subprocess.run([
                 venv_python, "-m", "pip", "install", "--upgrade", "pip"
             ], check=True, capture_output=True)
             
             # 必須パッケージインストール
-            print(f"📦 必須パッケージインストール中: {', '.join(インストール必要)}")
+            print(f"[PKG] 必須パッケージインストール中: {', '.join(インストール必要)}")
             subprocess.run([
                 venv_python, "-m", "pip", "install"
             ] + インストール必要, check=True, capture_output=True)
             
-            print("✅ 必須パッケージのインストール完了")
+            print("[OK] 必須パッケージのインストール完了")
             
         except subprocess.CalledProcessError as e:
-            print("❌ パッケージインストールに失敗しました")
+            print("[NG] パッケージインストールに失敗しました")
             print(f"エラー詳細: {e}")
             return False
     else:
-        print("✅ 必須パッケージは全てインストール済みです")
+        print("[OK] 必須パッケージは全てインストール済みです")
     
     # オプションパッケージの提案
     オプション未インストール = []
@@ -192,14 +192,14 @@ def 仮想環境パッケージ管理(仮想環境パス: str) -> bool:
             ], capture_output=True, text=True)
             
             if 結果.returncode == 0:
-                print(f"  ✅ {パッケージ} - インストール済み（高速化機能が利用可能）")
+                print(f"  [OK] {パッケージ} - インストール済み（高速化機能が利用可能）")
             else:
                 オプション未インストール.append(パッケージ)
         except Exception:
             オプション未インストール.append(パッケージ)
     
     if オプション未インストール:
-        print(f"\n💡 高速化のため、オプションパッケージのインストールを推奨します:")
+        print(f"\n[HINT] 高速化のため、オプションパッケージのインストールを推奨します:")
         for パッケージ in オプション未インストール:
             if パッケージ == 'aiohttp':
                 print(f"  - {パッケージ}: DOI解決が8倍高速化（並列処理）")
@@ -209,11 +209,11 @@ def 仮想環境パッケージ管理(仮想環境パス: str) -> bool:
         try:
             回答 = input("\nオプションパッケージをインストールしますか？ (y/n): ").lower().strip()
             if 回答 in ['y', 'yes']:
-                print(f"📦 オプションパッケージインストール中...")
+                print(f"[PKG] オプションパッケージインストール中...")
                 subprocess.run([
                     venv_python, "-m", "pip", "install"
                 ] + オプション未インストール, check=True, capture_output=True)
-                print("✅ オプションパッケージのインストール完了")
+                print("[OK] オプションパッケージのインストール完了")
                 
                 # NLTKリソースのダウンロード
                 if 'nltk' in オプション未インストール:
@@ -223,9 +223,9 @@ def 仮想環境パッケージ管理(仮想環境パス: str) -> bool:
                             venv_python, "-c", 
                             "import nltk; nltk.download('punkt', quiet=True); nltk.download('averaged_perceptron_tagger_eng', quiet=True); nltk.download('wordnet', quiet=True)"
                         ], check=True, capture_output=True)
-                        print("✅ NLTK追加リソース完了")
+                        print("[OK] NLTK追加リソース完了")
                     except Exception as e:
-                        print(f"⚠️  NLTK追加リソースの一部でエラー: {e}")
+                        print(f"[WARN]  NLTK追加リソースの一部でエラー: {e}")
             else:
                 print("⏭️  オプションパッケージをスキップしました")
         except (KeyboardInterrupt, EOFError):
@@ -235,18 +235,18 @@ def 仮想環境パッケージ管理(仮想環境パス: str) -> bool:
 
 def システム環境パッケージインストール() -> bool:
     """システム環境でのパッケージインストール（非推奨）"""
-    print("\n⚠️  システム環境でパッケージをインストールします（非推奨）")
+    print("\n[WARN]  システム環境でパッケージをインストールします（非推奨）")
     必須パッケージ = ['pandas', 'requests', 'requests_cache', 'tqdm']
     
     try:
         subprocess.check_call([
             sys.executable, '-m', 'pip', 'install', '--user'
         ] + 必須パッケージ)
-        print("✅ システム環境でのインストール完了")
+        print("[OK] システム環境でのインストール完了")
         return True
     except subprocess.CalledProcessError as e:
-        print("❌ システム環境でのインストール失敗")
-        print("💡 手動でインストールしてください:")
+        print("[NG] システム環境でのインストール失敗")
+        print("[HINT] 手動でインストールしてください:")
         print(f"pip install --user {' '.join(必須パッケージ)}")
         return False
 
@@ -254,31 +254,31 @@ def ディレクトリ作成():
     """必要なディレクトリを作成"""
     必要ディレクトリ = ['JSON_folder', 'md_folder', 'PDF']
     
-    print(f"\n📁 出力ディレクトリを作成中...")
+    print(f"\n[DIR] 出力ディレクトリを作成中...")
     for ディレクトリ in 必要ディレクトリ:
         if not os.path.exists(ディレクトリ):
             os.makedirs(ディレクトリ)
-            print(f"  📁 {ディレクトリ}/ を作成")
+            print(f"  [DIR] {ディレクトリ}/ を作成")
         else:
-            print(f"  ✅ {ディレクトリ}/ 既存")
+            print(f"  [OK] {ディレクトリ}/ 既存")
 
 def 入力ファイル確認():
     """入力CSVファイルの存在確認"""
-    print(f"\n📄 入力ファイルをチェック中...")
+    print(f"\n[FILE] 入力ファイルをチェック中...")
     
     work_dir = os.getcwd()
     csv_files = [f for f in os.listdir(work_dir) 
                  if f.endswith('.csv') and f != 'scopus_combined.csv']
     
     if csv_files:
-        print(f"  ✅ {len(csv_files)}件のCSVファイルを発見:")
+        print(f"  [OK] {len(csv_files)}件のCSVファイルを発見:")
         for csv_file in csv_files[:3]:
             print(f"    - {csv_file}")
         if len(csv_files) > 3:
             print(f"    - ... 他{len(csv_files)-3}件")
         return True
     else:
-        print(f"  ❌ CSVファイルが見つかりません")
+        print(f"  [NG] CSVファイルが見つかりません")
         print(f"  📝 使用方法:")
         print(f"    1. 作業フォルダを作成")
         print(f"    2. Scopus CSVファイルを配置")
@@ -287,13 +287,13 @@ def 入力ファイル確認():
 
 def 実行例表示():
     """実行例を表示"""
-    print(f"\n🚀 セットアップ完了！以下のコマンドで実行してください:")
+    print(f"\n[START] セットアップ完了！以下のコマンドで実行してください:")
     print(f"")
     
     仮想環境パス = ".venv"
     
     if os.path.exists(仮想環境パス):
-        print(f"# ✅ 仮想環境セットアップ完了")
+        print(f"# [OK] 仮想環境セットアップ完了")
         
         アクティベーションコマンド = 仮想環境アクティベーションコマンド取得(仮想環境パス)
         
@@ -317,10 +317,10 @@ def 実行例表示():
             PDF実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python3 pdf_tools/PDF取得.py")
         print(f"{PDF実行コマンド}")
         
-        print(f"\n💡 次回からは以下のコマンドで簡単実行:")
+        print(f"\n[HINT] 次回からは以下のコマンドで簡単実行:")
         print(f"{実行コマンド}")
     else:
-        print(f"# ⚠️  システム環境で実行")
+        print(f"# [WARN]  システム環境で実行")
         if platform.system() == "Windows":
             print(f"python 全自動実行.py")
             print(f"python core\\scopus解析.py")
@@ -332,7 +332,7 @@ def 実行例表示():
 
 def main():
     """メイン処理"""
-    print("🎯 Scopus文献可視化システム - 改良版自動セットアップ")
+    print("[TARGET] Scopus文献可視化システム - 改良版自動セットアップ")
     print("=" * 60)
     print("✨ 機能: 仮想環境作成→パッケージインストール→ディレクトリ作成を一回で完了")
     print("=" * 60)
@@ -342,18 +342,18 @@ def main():
     
     # Python バージョンチェック
     if sys.version_info < (3, 7):
-        print("❌ Python 3.7以上が必要です")
+        print("[NG] Python 3.7以上が必要です")
         print(f"現在のバージョン: {sys.version}")
         sys.exit(1)
     else:
-        print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} 対応")
+        print(f"[OK] Python {sys.version_info.major}.{sys.version_info.minor} 対応")
     
     # OS確認
-    print(f"✅ OS: {platform.system()}")
+    print(f"[OK] OS: {platform.system()}")
     
     # 仮想環境作成とパッケージインストール（一回で完了）
     if not 仮想環境作成および設定(自動実行=自動実行):
-        print("❌ 仮想環境セットアップに失敗しました")
+        print("[NG] 仮想環境セットアップに失敗しました")
         sys.exit(1)
     
     # ディレクトリ作成
@@ -365,8 +365,8 @@ def main():
     # 実行例表示
     実行例表示()
     
-    print(f"\n🎉 改良版セットアップ完了！")
-    print(f"💡 仮想環境作成からパッケージインストールまで一回で完了しました")
+    print(f"\n[DONE] 改良版セットアップ完了！")
+    print(f"[HINT] 仮想環境作成からパッケージインストールまで一回で完了しました")
 
 if __name__ == "__main__":
     main()

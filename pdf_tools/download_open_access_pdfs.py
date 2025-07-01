@@ -165,7 +165,7 @@ def add_pdf_embed_to_markdown(md_path: str, pdf_filename: str) -> None:
 
 ## PDF
 
-**フルテキストPDF**: [📄 {pdf_filename}](PDF/{pdf_filename})
+**フルテキストPDF**: [[FILE] {pdf_filename}](PDF/{pdf_filename})
 
 <embed src="PDF/{pdf_filename}" type="application/pdf" width="100%" height="600px" />
 

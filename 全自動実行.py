@@ -39,7 +39,7 @@ def 安全なinput(プロンプト: str, デフォルト: str = "n", CI環境: b
 
 def banner():
     """バナー表示"""
-    print("🚀 Scopus文献可視化システム - 全自動実行")
+    print("[START] Scopus文献可視化システム - 全自動実行")
     print("=" * 60)
     print("📋 実行内容:")
     print("   1️⃣  環境チェック・依存関係確認")
@@ -53,38 +53,38 @@ def banner():
 
 def 仮想環境チェック():
     """仮想環境の状況を確認"""
-    print("\n🔍 実行環境をチェック中...")
+    print("\n[INFO] 実行環境をチェック中...")
     
     # 仮想環境がアクティブかチェック
     is_venv_active = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
     
     if os.path.exists(".venv"):
         if is_venv_active:
-            print("✅ 仮想環境がアクティブです")
+            print("[OK] 仮想環境がアクティブです")
             return True
         else:
-            print("❌ 仮想環境が存在しますが、アクティブではありません")
-            print("🔧 解決方法:")
+            print("[NG] 仮想環境が存在しますが、アクティブではありません")
+            print("[SETUP] 解決方法:")
             print("   source .venv/bin/activate && python3 全自動実行.py")
             print("   または setup.py を先に実行してください")
             return False
     else:
-        print("⚠️  仮想環境が見つかりません")
-        print("🔧 自動で setup.py を実行して仮想環境を作成します...")
+        print("[WARN]  仮想環境が見つかりません")
+        print("[SETUP] 自動で setup.py を実行して仮想環境を作成します...")
         
         try:
-            print("\n🔧 setup.py を実行中...")
+            print("\n[SETUP] setup.py を実行中...")
             結果 = subprocess.run([sys.executable, "setup.py"], check=True)
-            print("✅ setup.py 実行完了")
-            print("⚠️  仮想環境をアクティベートしてから再実行してください:")
+            print("[OK] setup.py 実行完了")
+            print("[WARN]  仮想環境をアクティベートしてから再実行してください:")
             print("source .venv/bin/activate && python3 全自動実行.py")
-            print("\n💡 次回からは以下のコマンドで簡単実行:")
+            print("\n[HINT] 次回からは以下のコマンドで簡単実行:")
             print("   source .venv/bin/activate && python3 全自動実行.py")
             return False
         except subprocess.CalledProcessError:
-            print("❌ setup.py 実行失敗")
-            print("🔧 手動で実行してください: python3 setup.py")
-            print("⚠️  それでも続行しますか？（仮想環境なし・非推奨）")
+            print("[NG] setup.py 実行失敗")
+            print("[SETUP] 手動で実行してください: python3 setup.py")
+            print("[WARN]  それでも続行しますか？（仮想環境なし・非推奨）")
             try:
                 ci環境 = CI環境チェック()
                 回答 = 安全なinput("仮想環境なしで続行しますか？ (y/n): ", "n", ci環境)
@@ -103,7 +103,7 @@ def 仮想環境チェック():
 
 def 依存関係チェック():
     """必須パッケージの確認"""
-    print("\n📦 依存関係をチェック中...")
+    print("\n[PKG] 依存関係をチェック中...")
     必須パッケージ = ['pandas', 'requests', 'requests_cache', 'tqdm']
     未インストール = []
     
@@ -113,18 +113,18 @@ def 依存関係チェック():
             未インストール.append(パッケージ名)
     
     if 未インストール:
-        print(f"❌ 必須パッケージが不足: {', '.join(未インストール)}")
-        print("🔧 解決方法:")
+        print(f"[NG] 必須パッケージが不足: {', '.join(未インストール)}")
+        print("[SETUP] 解決方法:")
         print("   仮想環境を使用: source .venv/bin/activate")
         print("   または手動インストール: pip install pandas requests requests_cache tqdm")
         return False
     else:
-        print("✅ 必須パッケージは全てインストール済み")
+        print("[OK] 必須パッケージは全てインストール済み")
         return True
 
 def オプションライブラリチェック():
     """オプションライブラリの確認と自動インストール提案"""
-    print("\n🔍 拡張機能チェック中...")
+    print("\n[INFO] 拡張機能チェック中...")
     
     オプションパッケージ = {
         'aiohttp': {
@@ -149,12 +149,12 @@ def オプションライブラリチェック():
                 break
     
     if not 未インストール拡張:
-        print("✅ 全ての拡張機能が利用可能です")
+        print("[OK] 全ての拡張機能が利用可能です")
         return True
     
-    print(f"💡 利用可能な拡張機能:")
+    print(f"[HINT] 利用可能な拡張機能:")
     for key, info in 未インストール拡張.items():
-        print(f"   🚀 {info['name']}: {info['description']}")
+        print(f"   [START] {info['name']}: {info['description']}")
     
     print(f"\n⚙️  これらの拡張機能を仮想環境にインストールしますか？")
     print(f"   (処理速度と分析品質が大幅に向上します)")
@@ -173,11 +173,11 @@ def オプションライブラリチェック():
 
 def 拡張機能インストール(未インストール拡張):
     """拡張機能の自動インストール"""
-    print(f"\n🔧 拡張機能をインストール中...")
+    print(f"\n[SETUP] 拡張機能をインストール中...")
     
     インストール成功 = True
     for key, info in 未インストール拡張.items():
-        print(f"\n📦 {info['name']} をインストール中...")
+        print(f"\n[PKG] {info['name']} をインストール中...")
         
         try:
             インストールパッケージ = ' '.join(info['packages'])
@@ -187,7 +187,7 @@ def 拡張機能インストール(未インストール拡張):
             ] + info['packages'], 
             capture_output=True, text=True, check=True)
             
-            print(f"✅ {info['name']} インストール完了")
+            print(f"[OK] {info['name']} インストール完了")
             
             # NLTKの場合、追加リソースも自動ダウンロード
             if key == 'nltk':
@@ -197,79 +197,79 @@ def 拡張機能インストール(未インストール拡張):
                     nltk.download('punkt', quiet=True)
                     nltk.download('averaged_perceptron_tagger_eng', quiet=True)
                     nltk.download('wordnet', quiet=True)
-                    print("✅ NLTK追加リソース完了")
+                    print("[OK] NLTK追加リソース完了")
                 except Exception as e:
-                    print(f"⚠️  NLTK追加リソースの一部でエラー: {e}")
+                    print(f"[WARN]  NLTK追加リソースの一部でエラー: {e}")
         
         except subprocess.CalledProcessError as e:
-            print(f"❌ {info['name']} インストール失敗: {e}")
+            print(f"[NG] {info['name']} インストール失敗: {e}")
             インストール成功 = False
         except Exception as e:
-            print(f"❌ {info['name']} インストールエラー: {e}")
+            print(f"[NG] {info['name']} インストールエラー: {e}")
             インストール成功 = False
     
     if インストール成功:
-        print(f"\n🎉 全拡張機能のインストールが完了しました！")
+        print(f"\n[DONE] 全拡張機能のインストールが完了しました！")
         print(f"⚡ 処理速度と分析品質が向上します")
     else:
-        print(f"\n⚠️  一部の拡張機能でエラーが発生しました")
-        print(f"💡 基本機能で処理を続行します")
+        print(f"\n[WARN]  一部の拡張機能でエラーが発生しました")
+        print(f"[HINT] 基本機能で処理を続行します")
     
     return True
 
 def CSV確認():
     """CSVファイルの存在確認"""
-    print("\n📄 CSVファイルをチェック中...")
+    print("\n[FILE] CSVファイルをチェック中...")
     現在ディレクトリ = os.getcwd()
     csv_files = [f for f in os.listdir(現在ディレクトリ) if f.endswith('.csv') and 'scopus' in f.lower()]
     
     if not csv_files:
-        print("❌ Scopus CSVファイルが見つかりません")
-        print("🔧 解決方法:")
+        print("[NG] Scopus CSVファイルが見つかりません")
+        print("[SETUP] 解決方法:")
         print("   1. ScopusからエクスポートしたCSVファイルを作業フォルダに配置")
         print("   2. ファイル名に'scopus'を含める（例: scopus_export.csv）")
         return False
     else:
-        print(f"✅ {len(csv_files)}個のCSVファイルを発見:")
+        print(f"[OK] {len(csv_files)}個のCSVファイルを発見:")
         for f in csv_files:
-            print(f"   📄 {f}")
+            print(f"   [FILE] {f}")
         return True
 
 def スクリプト実行(スクリプト名, 説明):
     """スクリプトを実行"""
-    print(f"\n🔄 {説明}を実行中...")
-    print(f"📄 {スクリプト名}")
+    print(f"\n[PROC] {説明}を実行中...")
+    print(f"[FILE] {スクリプト名}")
     
     try:
         開始時間 = time.time()
         結果 = subprocess.run([sys.executable, スクリプト名], check=True)
         実行時間 = time.time() - 開始時間
-        print(f"✅ {説明} 完了 ({実行時間:.1f}秒)")
+        print(f"[OK] {説明} 完了 ({実行時間:.1f}秒)")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ {説明} でエラー発生 (コード: {e.returncode})")
+        print(f"[NG] {説明} でエラー発生 (コード: {e.returncode})")
         return False
     except Exception as e:
-        print(f"❌ {説明} で予期しないエラー: {e}")
+        print(f"[NG] {説明} で予期しないエラー: {e}")
         return False
 
 def PDF取得実行():
     """PDF取得を実行（オプション）"""
-    print(f"\n🔄 オープンアクセスPDF取得を実行中...")
-    print(f"📄 download_open_access_pdfs_fast_stdlib.py")
+    print(f"\n[PROC] オープンアクセスPDF取得を実行中...")
+    print(f"[FILE] download_open_access_pdfs_fast_stdlib.py")
     
     try:
         開始時間 = time.time()
         スクリプトパス = os.path.join("pdf_tools", "download_open_access_pdfs_fast_stdlib.py")
         結果 = subprocess.run([sys.executable, スクリプトパス], check=True)
         実行時間 = time.time() - 開始時間
-        print(f"✅ オープンアクセスPDF取得 完了 ({実行時間:.1f}秒)")
+        print(f"[OK] オープンアクセスPDF取得 完了 ({実行時間:.1f}秒)")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ PDF取得でエラー発生 (コード: {e.returncode})")
+        print(f"[NG] PDF取得でエラー発生 (コード: {e.returncode})")
         return False
     except Exception as e:
-        print(f"❌ PDF取得で予期しないエラー: {e}")
+        print(f"[NG] PDF取得で予期しないエラー: {e}")
         return False
 
 def PDF数確認(pdf_dir="PDF"):
@@ -283,7 +283,7 @@ def メール通知オプション確認():
     if not EMAIL_AVAILABLE:
         return False
     
-    print(f"\n💡 オプション: 処理完了時のメール通知")
+    print(f"\n[HINT] オプション: 処理完了時のメール通知")
     
     # 現在の設定状況確認
     設定済み, 状況 = メール設定状況確認()
@@ -306,10 +306,10 @@ def メール通知オプション確認():
             回答 = 安全なinput("メール設定をセットアップしますか？ (y/n): ", "n", ci環境)
             if 回答 in ['y', 'yes']:
                 if メール設定セットアップ():
-                    print("✅ メール設定完了！完了時に通知を送信します")
+                    print("[OK] メール設定完了！完了時に通知を送信します")
                     return True
                 else:
-                    print("❌ メール設定に失敗しました")
+                    print("[NG] メール設定に失敗しました")
             return False
         except KeyboardInterrupt:
             return False
@@ -332,19 +332,19 @@ def main():
     
     # 仮想環境チェック
     if not 仮想環境チェック():
-        print("\n❌ 実行環境のセットアップが必要です。")
+        print("\n[NG] 実行環境のセットアップが必要です。")
         return
     
     if not 依存関係チェック():
-        print("\n❌ 必須パッケージが不足しています。上記の解決方法を試してください。")
+        print("\n[NG] 必須パッケージが不足しています。上記の解決方法を試してください。")
         return
     
     if not オプションライブラリチェック():
-        print("\n❌ 拡張機能チェックで問題が発生しました。")
+        print("\n[NG] 拡張機能チェックで問題が発生しました。")
         return
     
     if not CSV確認():
-        print("\n❌ CSVファイルチェックに失敗しました。上記の解決方法を試してください。")
+        print("\n[NG] CSVファイルチェックに失敗しました。上記の解決方法を試してください。")
         return
     
     成功ステップ += 1
@@ -366,14 +366,14 @@ def main():
         if スクリプト実行(スクリプト, 説明):
             成功ステップ += 1
         else:
-            print(f"\n❌ {説明} でエラーが発生しましたが処理を続行します")
+            print(f"\n[NG] {説明} でエラーが発生しましたが処理を続行します")
             time.sleep(1)
     
     # 最終結果
     全実行時間 = time.time() - 全開始時間
     print(f"\n{'='*60}")
-    print("🎉 メイン処理完了!")
-    print(f"📊 成功ステップ: {成功ステップ}/{総ステップ}")
+    print("[DONE] メイン処理完了!")
+    print(f"[DATA] 成功ステップ: {成功ステップ}/{総ステップ}")
     print(f"⏱️  総実行時間: {全実行時間/60:.1f}分")
     
     # 生成ファイル確認
@@ -381,44 +381,44 @@ def main():
     md_count = len([f for f in os.listdir("md_folder") if f.endswith(".md")]) if os.path.exists("md_folder") else 0
     初期pdf_count = PDF数確認()
     
-    print(f"\n📁 生成ファイル数:")
-    print(f"   📄 JSONファイル: {json_count}件")
+    print(f"\n[DIR] 生成ファイル数:")
+    print(f"   [FILE] JSONファイル: {json_count}件")
     print(f"   📝 Markdownファイル: {md_count}件")
     print(f"   📋 PDFファイル: {初期pdf_count}件")
     
     if 成功ステップ == 総ステップ:
-        print(f"\n🎯 メイン処理完了! 学術文献データベースが完成しました")
+        print(f"\n[TARGET] メイン処理完了! 学術文献データベースが完成しました")
         print(f"📂 md_folder/ で Markdown ファイルを確認してください")
         
         # PDF取得オプション
-        print(f"\n💡 オプション: オープンアクセス論文のPDF取得")
+        print(f"\n[HINT] オプション: オープンアクセス論文のPDF取得")
         print(f"   (高速並列処理 - 最大8スレッド)")
         
         try:
             回答 = 安全なinput("\nPDF取得を実行しますか？ (y/n): ", "n", ci環境)
             if 回答 in ['y', 'yes']:
                 print(f"\n{'='*50}")
-                print("🔄 7️⃣  オープンアクセスPDF取得")
+                print("[PROC] 7️⃣  オープンアクセスPDF取得")
                 print("=" * 50)
                 
                 pdf_結果 = PDF取得実行()
                 if pdf_結果:
                     最終pdf_count = PDF数確認()
                     新規pdf_count = 最終pdf_count - 初期pdf_count
-                    print(f"\n📈 PDF取得結果:")
+                    print(f"\n[CHART] PDF取得結果:")
                     print(f"   📥 新規PDF取得: {新規pdf_count}件")
-                    print(f"   📁 総PDF数: {最終pdf_count}件")
+                    print(f"   [DIR] 総PDF数: {最終pdf_count}件")
                     
-                    print(f"\n🎉 全処理完了! 完全な学術文献データベースが完成しました")
+                    print(f"\n[DONE] 全処理完了! 完全な学術文献データベースが完成しました")
                     print(f"📂 PDF付きMarkdownファイル: md_folder/")
-                    print(f"📄 PDFファイル: PDF/")
+                    print(f"[FILE] PDFファイル: PDF/")
                 else:
-                    print(f"\n⚠️  PDF取得でエラーが発生しましたが、メイン処理は完了しています")
+                    print(f"\n[WARN]  PDF取得でエラーが発生しましたが、メイン処理は完了しています")
                     最終pdf_count = 初期pdf_count
                     新規pdf_count = 0
             else:
                 print(f"\n⏭️  PDF取得をスキップしました")
-                print(f"💡 後でPDF取得する場合: python3 pdf_tools/PDF取得.py")
+                print(f"[HINT] 後でPDF取得する場合: python3 pdf_tools/PDF取得.py")
                 pdf_結果 = False
                 最終pdf_count = 初期pdf_count
                 新規pdf_count = 0
@@ -430,8 +430,8 @@ def main():
         
         print(f"\n📋 最終結果:")
         print(f"   📖 Markdownファイル確認: md_folder/")
-        print(f"   🔍 JSONデータ確認: JSON_folder/")
-        print(f"   📄 PDFファイル確認: PDF/")
+        print(f"   [INFO] JSONデータ確認: JSON_folder/")
+        print(f"   [FILE] PDFファイル確認: PDF/")
         
         # メール通知送信
         if メール通知有効:
@@ -451,11 +451,11 @@ def main():
                 }
             
             if 処理完了通知送信(成功ステップ, 総ステップ, 全実行時間, 生成ファイル数, pdf取得結果):
-                print("✅ 完了通知メール送信完了")
+                print("[OK] 完了通知メール送信完了")
             else:
-                print("⚠️  メール送信に失敗しました（処理は正常完了）")
+                print("[WARN]  メール送信に失敗しました（処理は正常完了）")
     else:
-        print(f"\n⚠️  一部ステップでエラーが発生しました")
+        print(f"\n[WARN]  一部ステップでエラーが発生しました")
         print(f"📋 個別実行で問題を解決してください: python3 core/scopus解析.py")
         
         # エラー時もメール通知送信
@@ -468,9 +468,9 @@ def main():
             }
             
             if 処理完了通知送信(成功ステップ, 総ステップ, 全実行時間, 生成ファイル数):
-                print("✅ エラー通知メール送信完了")
+                print("[OK] エラー通知メール送信完了")
             else:
-                print("⚠️  メール送信に失敗しました")
+                print("[WARN]  メール送信に失敗しました")
 
 if __name__ == "__main__":
     main()

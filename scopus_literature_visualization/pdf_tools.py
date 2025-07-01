@@ -13,14 +13,14 @@ from pathlib import Path
 def run_pdf_tools(auto_mode=False):
     """PDF取得ツール実行"""
     
-    print("📄 PDF取得ツール開始")
+    print("[FILE] PDF取得ツール開始")
     print("=" * 30)
     
     # PDF取得スクリプトのパス
     pdf_script = Path("pdf_tools/PDF取得.py")
     
     if not pdf_script.exists():
-        print("⚠️ PDF取得スクリプトが見つかりません")
+        print("[WARN] PDF取得スクリプトが見つかりません")
         return
     
     try:
@@ -42,14 +42,14 @@ def run_pdf_tools(auto_mode=False):
             )
         
         if result.returncode == 0:
-            print("✅ PDF取得完了")
+            print("[OK] PDF取得完了")
         else:
-            print("⚠️ PDF取得で一部エラーが発生しました")
+            print("[WARN] PDF取得で一部エラーが発生しました")
             
     except subprocess.CalledProcessError as e:
-        print(f"❌ PDF取得でエラーが発生しました: {e}")
+        print(f"[NG] PDF取得でエラーが発生しました: {e}")
     except Exception as e:
-        print(f"❌ 予期しないエラー: {e}")
+        print(f"[NG] 予期しないエラー: {e}")
 
 
 def main():

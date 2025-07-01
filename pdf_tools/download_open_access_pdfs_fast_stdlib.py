@@ -52,7 +52,7 @@ def make_request(url: str, method: str = 'GET', timeout: int = 10) -> Tuple[bool
             
     except Exception as e:
         if not TQDM_AVAILABLE:  # tqdmがない場合のみエラーログ
-            print(f"❌ Request failed for {url}: {e}")
+            print(f"[NG] Request failed for {url}: {e}")
         return False, {}, b''
 
 def check_open_access_status(crossref_data: dict) -> dict:
@@ -160,7 +160,7 @@ def download_pdf_fast(url: str, filepath: str) -> bool:
             # Content-Type をチェック
             content_type = response.headers.get('content-type', '').lower()
             if 'pdf' not in content_type and 'application/octet-stream' not in content_type:
-                print(f"❌ Not a PDF file: {content_type}")
+                print(f"[NG] Not a PDF file: {content_type}")
                 return False
             
             # ファイルサイズチェック（最小100KB、最大50MB）
@@ -168,7 +168,7 @@ def download_pdf_fast(url: str, filepath: str) -> bool:
             if content_length:
                 size_mb = int(content_length) / (1024 * 1024)
                 if size_mb < 0.1 or size_mb > 50:
-                    print(f"❌ File size out of range: {size_mb:.1f}MB")
+                    print(f"[NG] File size out of range: {size_mb:.1f}MB")
                     return False
             
             # 高速ダウンロード
@@ -183,16 +183,16 @@ def download_pdf_fast(url: str, filepath: str) -> bool:
         file_size = os.path.getsize(filepath)
         if file_size < 100 * 1024:  # 100KB未満
             os.remove(filepath)
-            print(f"❌ Downloaded file too small: {file_size} bytes")
+            print(f"[NG] Downloaded file too small: {file_size} bytes")
             return False
         
         if not TQDM_AVAILABLE:  # tqdmがない場合のみ成功ログ
-            print(f"✅ Successfully downloaded: {os.path.basename(filepath)} ({file_size/1024:.0f}KB)")
+            print(f"[OK] Successfully downloaded: {os.path.basename(filepath)} ({file_size/1024:.0f}KB)")
         return True
         
     except Exception as e:
         if not TQDM_AVAILABLE:  # tqdmがない場合のみエラーログ
-            print(f"❌ Download failed from {url}: {e}")
+            print(f"[NG] Download failed from {url}: {e}")
         if os.path.exists(filepath):
             os.remove(filepath)
         return False
@@ -212,7 +212,7 @@ def add_pdf_embed_to_markdown(md_path: str, pdf_filename: str) -> None:
 
 ## PDF
 
-**フルテキストPDF**: [📄 {pdf_filename}](PDF/{pdf_filename})
+**フルテキストPDF**: [[FILE] {pdf_filename}](PDF/{pdf_filename})
 
 <embed src="PDF/{pdf_filename}" type="application/pdf" width="100%" height="600px" />
 
@@ -231,7 +231,7 @@ def add_pdf_embed_to_markdown(md_path: str, pdf_filename: str) -> None:
         print(f"📝 Added PDF embed to: {os.path.basename(md_path)}")
         
     except Exception as e:
-        print(f"❌ Error adding PDF embed to {md_path}: {e}")
+        print(f"[NG] Error adding PDF embed to {md_path}: {e}")
 
 def process_json_for_pdf(json_path: str, pdf_dir: str, md_dir: str) -> Tuple[bool, str]:
     """JSONファイルを処理してPDFダウンロードを試行"""
@@ -257,7 +257,7 @@ def process_json_for_pdf(json_path: str, pdf_dir: str, md_dir: str) -> Tuple[boo
         
         thread_id = threading.current_thread().name
         if not TQDM_AVAILABLE:  # tqdmがない場合のみ詳細ログ
-            print(f"🔍 [{thread_id}] Processing: {title[:50]}...")
+            print(f"[INFO] [{thread_id}] Processing: {title[:50]}...")
             print(f"📋 [{thread_id}] DOI: {doi}")
         
         # Crossrefデータからオープンアクセス情報を確認
@@ -274,7 +274,7 @@ def process_json_for_pdf(json_path: str, pdf_dir: str, md_dir: str) -> Tuple[boo
         # PDF ダウンロードを試行
         for i, url in enumerate(pdf_urls[:3]):  # 最大3つのURLを試行
             if not TQDM_AVAILABLE:  # tqdmがない場合のみ詳細ログ
-                print(f"🔄 [{thread_id}] Trying URL {i+1}/{min(3, len(pdf_urls))}: {url[:80]}...")
+                print(f"[PROC] [{thread_id}] Trying URL {i+1}/{min(3, len(pdf_urls))}: {url[:80]}...")
             if download_pdf_fast(url, pdf_path):
                 # ダウンロード成功時、MarkdownにPDF埋め込みを追加
                 if os.path.exists(md_path):
@@ -289,7 +289,7 @@ def process_json_for_pdf(json_path: str, pdf_dir: str, md_dir: str) -> Tuple[boo
 
 def main():
     """メイン処理（threading版）"""
-    print("🚀 オープンアクセスPDF高速並列取得開始（標準ライブラリ版）...")
+    print("[START] オープンアクセスPDF高速並列取得開始（標準ライブラリ版）...")
     start_time = time.time()
     
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -303,7 +303,7 @@ def main():
     # 全JSONファイルを取得
     json_files = [f for f in os.listdir(json_dir) if f.endswith('.json')]
     
-    print(f"📊 Processing {len(json_files)} files with parallel threads...")
+    print(f"[DATA] Processing {len(json_files)} files with parallel threads...")
     if TQDM_AVAILABLE:
         print(f"⚡ 高速並列処理モード (進捗バー表示)")
     else:
@@ -350,7 +350,7 @@ def main():
                         })
                         progress_bar.update(1)
                     else:
-                        print(f"✅ [{completed}/{len(json_files)}] {message}")
+                        print(f"[OK] [{completed}/{len(json_files)}] {message}")
                 else:
                     if TQDM_AVAILABLE:
                         success_rate = success_count/completed*100 if completed > 0 else 0
@@ -372,13 +372,13 @@ def main():
                     })
                     progress_bar.update(1)
                 else:
-                    print(f"❌ [{completed}/{len(json_files)}] Error with {json_file}: {e}")
+                    print(f"[NG] [{completed}/{len(json_files)}] Error with {json_file}: {e}")
             
             # 進行状況表示（tqdmがない場合のみ）
             if not TQDM_AVAILABLE and (completed % 5 == 0 or completed == len(json_files)):
                 elapsed = time.time() - start_time
                 rate = completed / elapsed if elapsed > 0 else 0
-                print(f"⏳ Progress: {completed}/{len(json_files)} files | {elapsed:.1f}s | {rate:.1f} files/sec | {max_workers}並列")
+                print(f"[WAIT] Progress: {completed}/{len(json_files)} files | {elapsed:.1f}s | {rate:.1f} files/sec | {max_workers}並列")
         
         if TQDM_AVAILABLE:
             progress_bar.close()
@@ -388,16 +388,16 @@ def main():
     end_time = time.time()
     elapsed = end_time - start_time
     
-    print(f"\n🎉 PDF取得完了!")
-    print(f"📈 処理時間: {elapsed:.1f}秒")
-    print(f"📊 新規PDF取得: {success_count}件")
-    print(f"📁 総PDF数: {total_pdfs}件")
+    print(f"\n[DONE] PDF取得完了!")
+    print(f"[CHART] 処理時間: {elapsed:.1f}秒")
+    print(f"[DATA] 新規PDF取得: {success_count}件")
+    print(f"[DIR] 総PDF数: {total_pdfs}件")
     print(f"📂 PDFフォルダ: {pdf_dir}")
     print(f"⚡ 処理速度: {len(json_files)/elapsed:.1f} files/sec")
     print(f"🧵 並列度: {max_workers} threads")
     
     if success_count == 0:
-        print(f"\n💡 PDF取得のヒント:")
+        print(f"\n[HINT] PDF取得のヒント:")
         print(f"   - オープンアクセス論文が少ない可能性があります")
         print(f"   - より多くのPDFを取得するには: python3 pdf_tools/PDF取得.py")
 

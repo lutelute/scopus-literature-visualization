@@ -23,13 +23,13 @@ def run_pipeline(auto_mode=False):
         "add_yaml_metadata.py"
     ]
     
-    print("🚀 Scopus文献可視化パイプライン開始")
+    print("[START] Scopus文献可視化パイプライン開始")
     print("=" * 50)
     
     for i, script in enumerate(scripts, 1):
         script_path = Path(script)
         if not script_path.exists():
-            print(f"⚠️ スクリプトが見つかりません: {script}")
+            print(f"[WARN] スクリプトが見つかりません: {script}")
             continue
             
         print(f"\n{i}️⃣ {script} 実行中...")
@@ -45,10 +45,10 @@ def run_pipeline(auto_mode=False):
             if result.stdout:
                 print(result.stdout)
             
-            print(f"✅ {script} 完了")
+            print(f"[OK] {script} 完了")
             
         except subprocess.CalledProcessError as e:
-            print(f"❌ {script} でエラーが発生しました")
+            print(f"[NG] {script} でエラーが発生しました")
             print(f"終了コード: {e.returncode}")
             if e.stderr:
                 print(f"エラー詳細: {e.stderr}")
@@ -57,7 +57,7 @@ def run_pipeline(auto_mode=False):
                 if user_input != 'y':
                     break
         except Exception as e:
-            print(f"❌ 予期しないエラー: {e}")
+            print(f"[NG] 予期しないエラー: {e}")
             if not auto_mode:
                 user_input = input("続行しますか？ (y/n): ").lower()
                 if user_input != 'y':

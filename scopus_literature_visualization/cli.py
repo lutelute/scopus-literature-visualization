@@ -62,44 +62,44 @@ def main():
     # 作業ディレクトリ設定
     work_dir = Path(args.dir).resolve()
     if not work_dir.exists():
-        print(f"❌ 指定されたディレクトリが見つかりません: {work_dir}")
+        print(f"[NG] 指定されたディレクトリが見つかりません: {work_dir}")
         sys.exit(1)
     
     os.chdir(work_dir)
-    print(f"📁 作業ディレクトリ: {work_dir}")
+    print(f"[DIR] 作業ディレクトリ: {work_dir}")
     
     # CSVファイルの存在確認
     csv_files = list(work_dir.glob("*.csv"))
     if not csv_files:
-        print("❌ CSVファイルが見つかりません")
+        print("[NG] CSVファイルが見つかりません")
         print("📝 Scopus CSVファイルを作業ディレクトリに配置してください")
         sys.exit(1)
     
-    print(f"✅ {len(csv_files)}個のCSVファイルを発見")
+    print(f"[OK] {len(csv_files)}個のCSVファイルを発見")
     
     try:
         if args.pdf_only:
-            print("🎯 PDF取得のみ実行")
+            print("[TARGET] PDF取得のみ実行")
             run_pdf_tools(auto_mode=args.auto)
         elif args.pipeline_only:
-            print("🎯 パイプライン処理のみ実行")
+            print("[TARGET] パイプライン処理のみ実行")
             run_pipeline(auto_mode=args.auto)
         else:
-            print("🎯 完全実行モード")
+            print("[TARGET] 完全実行モード")
             run_pipeline(auto_mode=args.auto)
             run_pdf_tools(auto_mode=args.auto)
         
-        print("\n🎉 処理完了！")
+        print("\n[DONE] 処理完了！")
         print("📂 結果を確認してください:")
         print("  - JSON_folder/: 文献メタデータ")
         print("  - md_folder/: Markdownファイル")
         print("  - PDF/: PDFファイル")
         
     except KeyboardInterrupt:
-        print("\n⚠️ ユーザーによって中断されました")
+        print("\n[WARN] ユーザーによって中断されました")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ エラーが発生しました: {e}")
+        print(f"\n[NG] エラーが発生しました: {e}")
         sys.exit(1)
 
 
