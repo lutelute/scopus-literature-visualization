@@ -36,11 +36,20 @@ jobs:
     
     - name: Display Python version and environment info
       run: |
-        python -c "import sys; print(sys.version)"
+        echo "=== Python Environment Information ==="
+        python -c "import sys; print(f'Python version: {sys.version}')"
         python -c "import platform; print(f'Platform: {platform.platform()}')"
-        echo "CI Environment Variables:"
+        python -c "import sys; print(f'Python executable: {sys.executable}')"
+        python -c "import site; print(f'Site packages: {site.getsitepackages()}')"
+        echo ""
+        echo "=== CI Environment Variables ==="
         echo "CI: $CI"
         echo "GITHUB_ACTIONS: $GITHUB_ACTIONS"
+        echo "RUNNER_OS: $RUNNER_OS"
+        echo ""
+        echo "=== Pip Information ==="
+        python -m pip --version
+        python -m pip config list
     
     - name: Create virtual environment
       run: |
@@ -48,56 +57,84 @@ jobs:
         python -m venv .venv
         echo "✅ Virtual environment created"
     
-    - name: Activate virtual environment and install dependencies (Windows)
+    - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       run: |
-        .\.venv\Scripts\Activate.ps1
-        python -m pip install --upgrade pip
-        # Retry mechanism for dependency installation
-        $packages = "pandas", "requests", "requests_cache", "tqdm"
+        # Set execution policy for current session
+        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+        
+        # Activate virtual environment  
+        & .\.venv\Scripts\Activate.ps1
+        
+        # Upgrade pip with increased timeout
+        python -m pip install --upgrade pip --timeout=120
+        
+        # Install dependencies with explicit retry and error handling
+        $packages = @("pandas", "requests", "requests_cache", "tqdm")
         foreach ($package in $packages) {
-          $retries = 3
-          $success = $false
-          while ($retries -gt 0 -and -not $success) {
+          $maxRetries = 3
+          $retryCount = 0
+          $installed = $false
+          
+          while ($retryCount -lt $maxRetries -and -not $installed) {
             try {
-              pip install $package --timeout=60
+              Write-Host "Installing $package (attempt $($retryCount + 1)/$maxRetries)..."
+              python -m pip install $package --timeout=120 --no-cache-dir --verbose
               Write-Host "✅ $package installed successfully"
-              $success = $true
+              $installed = $true
             } catch {
-              $retries--
-              Write-Host "⚠️  Retry installing $package ($retries attempts remaining)"
-              if ($retries -eq 0) {
-                Write-Host "❌ Failed to install $package after 3 attempts"
+              $retryCount++
+              if ($retryCount -eq $maxRetries) {
+                Write-Host "❌ Failed to install $package after $maxRetries attempts"
+                Write-Host "Error: $_"
                 exit 1
+              } else {
+                Write-Host "⚠️  Retry $retryCount/$maxRetries for $package in 10 seconds..."
+                Start-Sleep -Seconds 10
               }
-              Start-Sleep -Seconds 5
             }
           }
         }
         echo "✅ All dependencies installed (Windows)"
       shell: pwsh
     
-    - name: Activate virtual environment and install dependencies (Unix)
+    - name: Install dependencies (Unix)
       if: runner.os != 'Windows'
       run: |
-        source .venv/bin/activate
-        python -m pip install --upgrade pip --timeout=60
-        # Retry mechanism for dependency installation
+        # Activate virtual environment with error checking
+        if [ -f .venv/bin/activate ]; then
+          source .venv/bin/activate
+          echo "✅ Virtual environment activated"
+        else
+          echo "❌ Virtual environment activation script not found"
+          exit 1
+        fi
+        
+        # Upgrade pip with increased timeout and error handling
+        python -m pip install --upgrade pip --timeout=120 --no-cache-dir
+        
+        # Install dependencies with robust retry mechanism
         packages=("pandas" "requests" "requests_cache" "tqdm")
         for package in "${packages[@]}"; do
-          retries=3
-          while [ $retries -gt 0 ]; do
-            if pip install "$package" --timeout=60; then
+          max_retries=3
+          retry_count=0
+          installed=false
+          
+          while [ $retry_count -lt $max_retries ] && [ "$installed" = false ]; do
+            retry_count=$((retry_count + 1))
+            echo "Installing $package (attempt $retry_count/$max_retries)..."
+            
+            if python -m pip install "$package" --timeout=120 --no-cache-dir --verbose; then
               echo "✅ $package installed successfully"
-              break
+              installed=true
             else
-              retries=$((retries-1))
-              echo "⚠️  Retry installing $package ($retries attempts remaining)"
-              if [ $retries -eq 0 ]; then
-                echo "❌ Failed to install $package after 3 attempts"
+              if [ $retry_count -eq $max_retries ]; then
+                echo "❌ Failed to install $package after $max_retries attempts"
                 exit 1
+              else
+                echo "⚠️  Retry $retry_count/$max_retries for $package in 10 seconds..."
+                sleep 10
               fi
-              sleep 5
             fi
           done
         done
@@ -107,12 +144,28 @@ jobs:
     - name: Verify package installation (Windows)
       if: runner.os == 'Windows'
       run: |
-        .\.venv\Scripts\Activate.ps1
+        & .\.venv\Scripts\Activate.ps1
         echo "Testing installed packages..."
-        python -c "import pandas; print(f'✅ pandas {pandas.__version__}')"
-        python -c "import requests; print(f'✅ requests {requests.__version__}')"
-        python -c "import requests_cache; print(f'✅ requests_cache {requests_cache.__version__}')"
-        python -c "import tqdm; print(f'✅ tqdm {tqdm.__version__}')"
+        
+        # Test each package individually with error handling
+        $packages = @(
+          @("pandas", "import pandas; print(f'✅ pandas {pandas.__version__}')"),
+          @("requests", "import requests; print(f'✅ requests {requests.__version__}')"),
+          @("requests_cache", "import requests_cache; print(f'✅ requests_cache {requests_cache.__version__}')"),
+          @("tqdm", "import tqdm; print(f'✅ tqdm {tqdm.__version__}')")
+        )
+        
+        foreach ($pkg in $packages) {
+          $name = $pkg[0]
+          $test = $pkg[1]
+          try {
+            python -c $test
+          } catch {
+            Write-Host "❌ Failed to import $name"
+            Write-Host "Error: $_"
+            exit 1
+          }
+        }
         python -c "print('✅ Package verification completed (Windows)')"
       shell: pwsh
     
@@ -121,10 +174,23 @@ jobs:
       run: |
         source .venv/bin/activate
         echo "Testing installed packages..."
-        python -c "import pandas; print(f'✅ pandas {pandas.__version__}')"
-        python -c "import requests; print(f'✅ requests {requests.__version__}')"
-        python -c "import requests_cache; print(f'✅ requests_cache {requests_cache.__version__}')"
-        python -c "import tqdm; print(f'✅ tqdm {tqdm.__version__}')"
+        
+        # Test each package individually with error handling
+        packages=(
+          "pandas|import pandas; print(f'✅ pandas {pandas.__version__}')"
+          "requests|import requests; print(f'✅ requests {requests.__version__}')"
+          "requests_cache|import requests_cache; print(f'✅ requests_cache {requests_cache.__version__}')"
+          "tqdm|import tqdm; print(f'✅ tqdm {tqdm.__version__}')"
+        )
+        
+        for pkg in "${packages[@]}"; do
+          name="${pkg%|*}"
+          test="${pkg#*|}"
+          if ! python -c "$test"; then
+            echo "❌ Failed to import $name"
+            exit 1
+          fi
+        done
         python -c "print('✅ Package verification completed (Unix)')"
       shell: bash
     
