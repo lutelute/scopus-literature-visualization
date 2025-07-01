@@ -51,14 +51,14 @@ def 仮想環境pip実行ファイル取得(仮想環境パス: str) -> str:
 def 仮想環境アクティベーションコマンド取得(仮想環境パス: str) -> str:
     """OS別の仮想環境アクティベーションコマンドを取得"""
     if platform.system() == "Windows":
-        return f"{仮想環境パス}\\Scripts\\activate"
+        return f".\\{仮想環境パス}\\Scripts\\Activate.ps1"
     else:
         return f"source {仮想環境パス}/bin/activate"
 
 def 仮想環境実行コマンド生成(仮想環境パス: str, コマンド: str) -> str:
     """OS別の仮想環境実行コマンドを生成"""
     if platform.system() == "Windows":
-        return f"{仮想環境パス}\\Scripts\\activate && {コマンド}"
+        return f".\\{仮想環境パス}\\Scripts\\Activate.ps1; {コマンド}"
     else:
         return f"source {仮想環境パス}/bin/activate && {コマンド}"
 
@@ -122,9 +122,11 @@ def 仮想環境新規作成(仮想環境パス: str) -> bool:
         if platform.system() == "Windows":
             print(f"python -m venv {仮想環境パス}")
             print(f"{仮想環境アクティベーションコマンド取得(仮想環境パス)}")
+            print(f"python setup.py")
         else:
             print(f"python3 -m venv {仮想環境パス}")
             print(f"{仮想環境アクティベーションコマンド取得(仮想環境パス)}")
+            print(f"python3 setup.py")
         return False
 
 def 仮想環境再作成(仮想環境パス: str) -> bool:
@@ -317,27 +319,43 @@ def 実行例表示():
         アクティベーションコマンド = 仮想環境アクティベーションコマンド取得(仮想環境パス)
         
         print(f"# 📍 ワンコマンド全自動実行（推奨）")
-        実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python 全自動実行.py" if platform.system() == "Windows" else "python3 全自動実行.py")
-        print(f"{実行コマンド}")
+        if platform.system() == "Windows":
+            print(f"# Windows PowerShell用:")
+            print(f".\\{仮想環境パス}\\Scripts\\Activate.ps1")
+            print(f"python 全自動実行.py")
+            print(f"")
+            print(f"# Windows CMD用（代替）:")
+            print(f"{仮想環境パス}\\Scripts\\activate && python 全自動実行.py")
+        else:
+            実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python3 全自動実行.py")
+            print(f"{実行コマンド}")
         print(f"")
         
         print(f"# 📍 ステップバイステップ実行")
         if platform.system() == "Windows":
-            ステップ実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python core\\scopus解析.py")
+            print(f"# Windows PowerShell用:")
+            print(f".\\{仮想環境パス}\\Scripts\\Activate.ps1")
+            print(f"python core\\scopus解析.py")
         else:
             ステップ実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python3 core/scopus解析.py")
-        print(f"{ステップ実行コマンド}")
+            print(f"{ステップ実行コマンド}")
         print(f"")
         
         print(f"# 📍 PDF取得")
         if platform.system() == "Windows":
-            PDF実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python pdf_tools\\PDF取得.py")
+            print(f"# Windows PowerShell用:")
+            print(f".\\{仮想環境パス}\\Scripts\\Activate.ps1")
+            print(f"python pdf_tools\\PDF取得.py")
         else:
             PDF実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python3 pdf_tools/PDF取得.py")
-        print(f"{PDF実行コマンド}")
+            print(f"{PDF実行コマンド}")
         
         print(f"\n[HINT] 次回からは以下のコマンドで簡単実行:")
-        print(f"{実行コマンド}")
+        if platform.system() == "Windows":
+            print(f".\\{仮想環境パス}\\Scripts\\Activate.ps1; python 全自動実行.py")
+        else:
+            実行コマンド = 仮想環境実行コマンド生成(仮想環境パス, "python3 全自動実行.py")
+            print(f"{実行コマンド}")
     else:
         print(f"# [WARN]  システム環境で実行")
         if platform.system() == "Windows":
@@ -387,6 +405,11 @@ def main():
     
     print(f"\n[DONE] 改良版セットアップ完了！")
     print(f"[HINT] 仮想環境作成からパッケージインストールまで一回で完了しました")
+    
+    if platform.system() == "Windows":
+        print(f"\n[WINDOWS] PowerShell使用時の注意:")
+        print(f"   実行ポリシーエラーが出る場合: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser")
+        print(f"   または管理者権限で: Set-ExecutionPolicy RemoteSigned")
 
 if __name__ == "__main__":
     main()

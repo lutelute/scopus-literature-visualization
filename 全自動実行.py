@@ -77,9 +77,19 @@ def 仮想環境チェック():
             結果 = subprocess.run([sys.executable, "setup.py"], check=True)
             print("[OK] setup.py 実行完了")
             print("[WARN]  仮想環境をアクティベートしてから再実行してください:")
-            print("source .venv/bin/activate && python3 全自動実行.py")
-            print("\n[HINT] 次回からは以下のコマンドで簡単実行:")
-            print("   source .venv/bin/activate && python3 全自動実行.py")
+            import platform
+            if platform.system() == "Windows":
+                print("# Windows PowerShell用:")
+                print(".\\.venv\\Scripts\\Activate.ps1")
+                print("python 全自動実行.py")
+                print("\n# Windows CMD用:")
+                print(".venv\\Scripts\\activate && python 全自動実行.py")
+                print("\n[HINT] 次回からは以下のコマンドで簡单実行:")
+                print("   .\\.venv\\Scripts\\Activate.ps1; python 全自動実行.py")
+            else:
+                print("source .venv/bin/activate && python3 全自動実行.py")
+                print("\n[HINT] 次回からは以下のコマンドで簡単実行:")
+                print("   source .venv/bin/activate && python3 全自動実行.py")
             return False
         except subprocess.CalledProcessError:
             print("[NG] setup.py 実行失敗")
@@ -115,8 +125,17 @@ def 依存関係チェック():
     if 未インストール:
         print(f"[NG] 必須パッケージが不足: {', '.join(未インストール)}")
         print("[SETUP] 解決方法:")
-        print("   仮想環境を使用: source .venv/bin/activate")
-        print("   または手動インストール: pip install pandas requests requests_cache tqdm")
+        import platform
+        if platform.system() == "Windows":
+            print("   # Windows PowerShell用:")
+            print("   .\\.venv\\Scripts\\Activate.ps1")
+            print("   python 全自動実行.py")
+            print("   ")
+            print("   # または手動インストール:")
+            print("   pip install pandas requests requests_cache tqdm")
+        else:
+            print("   仮想環境を使用: source .venv/bin/activate")
+            print("   または手動インストール: pip install pandas requests requests_cache tqdm")
         return False
     else:
         print("[OK] 必須パッケージは全てインストール済み")
@@ -418,7 +437,13 @@ def main():
                     新規pdf_count = 0
             else:
                 print(f"\n⏭️  PDF取得をスキップしました")
-                print(f"[HINT] 後でPDF取得する場合: python3 pdf_tools/PDF取得.py")
+                import platform
+                if platform.system() == "Windows":
+                    print(f"[HINT] 後でPDF取得する場合:")
+                    print(f"   .\\.venv\\Scripts\\Activate.ps1")
+                    print(f"   python pdf_tools\\PDF取得.py")
+                else:
+                    print(f"[HINT] 後でPDF取得する場合: python3 pdf_tools/PDF取得.py")
                 pdf_結果 = False
                 最終pdf_count = 初期pdf_count
                 新規pdf_count = 0
@@ -456,7 +481,13 @@ def main():
                 print("[WARN]  メール送信に失敗しました（処理は正常完了）")
     else:
         print(f"\n[WARN]  一部ステップでエラーが発生しました")
-        print(f"📋 個別実行で問題を解決してください: python3 core/scopus解析.py")
+        import platform
+        if platform.system() == "Windows":
+            print(f"📋 個別実行で問題を解決してください:")
+            print(f"   .\\.venv\\Scripts\\Activate.ps1")
+            print(f"   python core\\scopus解析.py")
+        else:
+            print(f"📋 個別実行で問題を解決してください: python3 core/scopus解析.py")
         
         # エラー時もメール通知送信
         if メール通知有効:
