@@ -1,0 +1,19 @@
+# 開発・テスト用依存関係
+# Development and Testing Dependencies
+
+# 基本依存関係を含める
+-r requirements.txt
+
+# オプション機能（開発環境では推奨）
+aiohttp>=3.8.0,<4.0.0
+async-timeout>=4.0.0,<5.0.0
+nltk>=3.6.0,<4.0.0
+
+# テスト・品質管理ツール
+pytest>=6.0.0,<8.0.0
+pytest-cov>=2.12.0,<5.0.0
+
+# コード品質・フォーマット（オプション）
+# black>=22.0.0,<24.0.0
+# flake8>=4.0.0,<7.0.0
+# mypy>=0.950,<2.0.0
