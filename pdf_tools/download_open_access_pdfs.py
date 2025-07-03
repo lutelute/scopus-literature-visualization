@@ -160,16 +160,14 @@ def add_pdf_embed_to_markdown(md_path: str, pdf_filename: str) -> None:
         if "## PDF" in content:
             return  # 既に追加済み
         
-        # PDF埋め込みセクションを作成
+        # PDF埋め込みセクションを作成（Obsidian形式）
         pdf_section = f"""
 
 ## PDF
 
-**フルテキストPDF**: [[FILE] {pdf_filename}](PDF/{pdf_filename})
+![[{pdf_filename}]]
 
-<embed src="PDF/{pdf_filename}" type="application/pdf" width="100%" height="600px" />
-
-*ブラウザでPDFが表示されない場合は、上記リンクから直接ダウンロードしてください。*"""
+*PDFファイル: {pdf_filename}*"""
         
         # 参考文献の前に挿入
         if "## 参考文献" in content:
