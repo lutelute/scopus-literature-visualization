@@ -99,7 +99,7 @@ def 問題診断():
     """よくある問題の診断"""
     基準ディレクトリ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
-    print("\n🔍 問題診断")
+    print("\n[INFO] 問題診断")
     print("=" * 25)
     
     # 入力ファイル確認
@@ -107,38 +107,38 @@ def 問題診断():
     csv_files = [f for f in os.listdir(親ディレクトリ) 
                  if f.endswith('.csv') and f != 'scopus_combined.csv']
     if csv_files:
-        print(f"✅ 入力CSVファイル: {len(csv_files)}件発見")
+        print(f"[OK] 入力CSVファイル: {len(csv_files)}件発見")
         for csv_file in csv_files[:2]:
             print(f"   → {csv_file}")
         if len(csv_files) > 2:
             print(f"   → ...他{len(csv_files)-2}件")
     else:
-        print("❌ 入力CSVファイル: 見つかりません")
+        print("[NG] 入力CSVファイル: 見つかりません")
         print("   → 作業フォルダにScopus CSVファイルを配置してください")
     
     # 必要モジュール確認
     try:
         import nltk
-        print("✅ NLTK: インストール済み")
+        print("[OK] NLTK: インストール済み")
     except ImportError:
-        print("⚠️  NLTK: 未インストール")
+        print("[WARN]  NLTK: 未インストール")
         print("   → キーワード分析に必要です")
     
     try:
         import aiohttp
-        print("✅ aiohttp: インストール済み")
+        print("[OK] aiohttp: インストール済み")
     except ImportError:
         print("ℹ️  aiohttp: 未インストール（標準版で代替可能）")
     
     # 権限確認
     if os.access(基準ディレクトリ, os.W_OK):
-        print("✅ 書き込み権限: OK")
+        print("[OK] 書き込み権限: OK")
     else:
-        print("❌ 書き込み権限: 不足")
+        print("[NG] 書き込み権限: 不足")
 
 def main():
     """メイン処理"""
-    print("📊 Scopus文献可視化プロジェクト - 進行状況確認")
+    print("[DATA] Scopus文献可視化プロジェクト - 進行状況確認")
     print("=" * 55)
     
     # 現在の進行状況を取得
@@ -148,7 +148,7 @@ def main():
     print(f"🕒 記録日時: {進行状況['記録日時']}")
     print()
     
-    print("📁 ファイル数:")
+    print("[DIR] ファイル数:")
     for ファイル種類, 数 in 進行状況['ファイル数'].items():
         print(f"   {ファイル種類}: {数}件")
     
@@ -161,15 +161,15 @@ def main():
     print("⚙️ 処理段階:")
     for 段階, 状況 in 進行状況['処理段階'].items():
         if isinstance(状況, bool):
-            マーク = "✅" if 状況 else "⏳"
+            マーク = "[OK]" if 状況 else "[WAIT]"
             print(f"   {マーク} {段階}")
         else:
             print(f"   ❓ {段階}: {状況}")
     
     print()
-    print("📦 キャッシュファイル:")
+    print("[PKG] キャッシュファイル:")
     for ファイル, 存在 in 進行状況['キャッシュファイル'].items():
-        マーク = "✅" if 存在 else "❌"
+        マーク = "[OK]" if 存在 else "[NG]"
         print(f"   {マーク} {ファイル}")
     
     # 進行状況をJSONで保存
@@ -187,7 +187,7 @@ def main():
     作業再開ガイド表示()
     
     # 推奨次ステップ
-    print("\n🎯 推奨次ステップ:")
+    print("\n[TARGET] 推奨次ステップ:")
     if 進行状況['ファイル数']['JSON'] == 0:
         print("   → まずは core/scopus解析.py でDOI取得から始めてください")
     elif 進行状況['ファイル数']['Markdown'] == 0:

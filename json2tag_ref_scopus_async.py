@@ -205,7 +205,7 @@ def fetch_doi_titles(dois: Set[str]) -> Dict[str, str]:
 # ---------- メイン ----------
 def main():
     try:
-        print("🚀 json2tag_ref_scopus_async.py の実行開始")
+        print("[START] json2tag_ref_scopus_async.py の実行開始")
         print("=" * 60)
         
         ensure_nltk()
@@ -215,10 +215,10 @@ def main():
         os.makedirs(mdir, exist_ok=True)
 
         files = [f for f in os.listdir(jdir) if f.endswith(".json")]
-        print(f"📁 {len(files)} 件の JSON ファイルを処理します")
+        print(f"[DIR] {len(files)} 件の JSON ファイルを処理します")
         
         if not files:
-            print("❌ JSONファイルが見つかりません")
+            print("[NG] JSONファイルが見つかりません")
             return
 
         ref_dois: Set[str] = set()
@@ -241,10 +241,10 @@ def main():
         print(f"解決必要 DOI 数: {len(need)}")
 
         total_chunks = ((len(need)-1)//CHUNK_SIZE)+1 if need else 0
-        print(f"📊 DOI解決を{total_chunks}個のチャンクに分けて処理します")
+        print(f"[DATA] DOI解決を{total_chunks}個のチャンクに分けて処理します")
         
         for i, chunk in enumerate(chunk_list(need, CHUNK_SIZE), 1):
-            print(f"\n🔍 === DOI チャンク {i}/{total_chunks} 処理中 ({len(chunk)}件) ===")
+            print(f"\n[INFO] === DOI チャンク {i}/{total_chunks} 処理中 ({len(chunk)}件) ===")
             chunk_start = time.time()
             res = fetch_doi_titles(set(chunk))
             chunk_time = time.time() - chunk_start
@@ -257,11 +257,11 @@ def main():
             with open("doi_title_cache.json", "w", encoding="utf-8") as fp:
                 json.dump(doi2title, fp, ensure_ascii=False, indent=0)
             
-            print(f"✅ チャンク{i}完了: 成功{成功数}件, 失敗{失敗数}件, 時間{chunk_time:.1f}秒")
-            print(f"📁 累計解決DOI数: {len([v for v in doi2title.values() if v != 'Unknown'])}")
+            print(f"[OK] チャンク{i}完了: 成功{成功数}件, 失敗{失敗数}件, 時間{chunk_time:.1f}秒")
+            print(f"[DIR] 累計解決DOI数: {len([v for v in doi2title.values() if v != 'Unknown'])}")
             
             if i < total_chunks:
-                print(f"⏳ 次のチャンクまで1秒待機...")
+                print(f"[WAIT] 次のチャンクまで1秒待機...")
                 time.sleep(1)
 
         bar = tqdm(total=len(files), desc="MD 生成")
@@ -334,20 +334,20 @@ def main():
         
         # 最終統計
         print("\n" + "=" * 60)
-        print("🎉 処理完了統計")
-        print(f"📊 処理したJSONファイル: {len(files)}件")
-        print(f"📊 解決したDOI数: {len([v for v in doi2title.values() if v != 'Unknown'])}")
-        print(f"📊 総DOI数: {len(doi2title)}")
-        print(f"📁 出力ディレクトリ: {mdir}")
+        print("[DONE] 処理完了統計")
+        print(f"[DATA] 処理したJSONファイル: {len(files)}件")
+        print(f"[DATA] 解決したDOI数: {len([v for v in doi2title.values() if v != 'Unknown'])}")
+        print(f"[DATA] 総DOI数: {len(doi2title)}")
+        print(f"[DIR] 出力ディレクトリ: {mdir}")
         
         # 生成されたMarkdownファイル数確認
         md_count = len([f for f in os.listdir(mdir) if f.endswith('.md')])
         print(f"📝 生成Markdownファイル: {md_count}件")
-        print("✅ Markdown生成完了")
+        print("[OK] Markdown生成完了")
         
     except Exception:
         logging.error(f"FATAL\n{traceback.format_exc()}")
-        print(f"❌ 致命的エラーが発生しました。error_log.txt を確認してください。")
+        print(f"[NG] 致命的エラーが発生しました。error_log.txt を確認してください。")
 
 if __name__ == "__main__":
     main()

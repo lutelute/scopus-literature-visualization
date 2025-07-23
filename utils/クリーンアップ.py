@@ -20,7 +20,7 @@ def フォルダ削除確認(フォルダパス: str) -> int:
     if os.path.exists(フォルダパス):
         ファイル数 = len([f for f in os.listdir(フォルダパス) if os.path.isfile(os.path.join(フォルダパス, f))])
         if ファイル数 > 0:
-            print(f"  📁 {os.path.basename(フォルダパス)}/ ({ファイル数}件)")
+            print(f"  [DIR] {os.path.basename(フォルダパス)}/ ({ファイル数}件)")
         return ファイル数
     return 0
 
@@ -48,7 +48,7 @@ def main():
         ]
     }
     
-    print("🔍 削除対象ファイルを確認中...")
+    print("[INFO] 削除対象ファイルを確認中...")
     
     削除ファイル数 = 0
     削除フォルダ数 = 0
@@ -69,18 +69,18 @@ def main():
                     削除ファイル数 += 内部ファイル数
     
     if 削除ファイル数 == 0:
-        print("\n✅ 削除対象ファイルは見つかりませんでした。")
+        print("\n[OK] 削除対象ファイルは見つかりませんでした。")
         return
     
-    print(f"\n📊 削除予定:")
-    print(f"   📄 ファイル数: {削除ファイル数}件")
-    print(f"   📁 フォルダ数: {削除フォルダ数}件")
+    print(f"\n[DATA] 削除予定:")
+    print(f"   [FILE] ファイル数: {削除ファイル数}件")
+    print(f"   [DIR] フォルダ数: {削除フォルダ数}件")
     
     # 削除確認
     確認 = input("\n❓ これらのファイルを削除しますか？ (y/n): ").lower()
     
     if 確認 != 'y':
-        print("❌ クリーンアップをキャンセルしました。")
+        print("[NG] クリーンアップをキャンセルしました。")
         return
     
     print("\n🧹 クリーンアップを実行中...")
@@ -95,20 +95,20 @@ def main():
             try:
                 if os.path.isfile(パス):
                     os.remove(パス)
-                    print(f"  ✅ 削除: {ファイル名}")
+                    print(f"  [OK] 削除: {ファイル名}")
                     削除成功数 += 1
                 elif os.path.isdir(パス):
                     shutil.rmtree(パス)
-                    print(f"  ✅ 削除: {ファイル名}/")
+                    print(f"  [OK] 削除: {ファイル名}/")
                     削除成功数 += 1
             except Exception as e:
-                print(f"  ❌ エラー: {ファイル名} ({e})")
+                print(f"  [NG] エラー: {ファイル名} ({e})")
                 削除エラー数 += 1
     
-    print(f"\n🎉 クリーンアップ完了!")
-    print(f"📊 削除成功: {削除成功数}件")
+    print(f"\n[DONE] クリーンアップ完了!")
+    print(f"[DATA] 削除成功: {削除成功数}件")
     if 削除エラー数 > 0:
-        print(f"⚠️ 削除エラー: {削除エラー数}件")
+        print(f"[WARN] 削除エラー: {削除エラー数}件")
     
     print(f"\n📋 次の手順:")
     print(f"   1. scopus解析.py を実行してMarkdownファイルを生成")

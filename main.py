@@ -37,7 +37,7 @@ try:
     subprocess.run([pip_executable, "install", "--upgrade", "pip"], check=True)
     subprocess.run([pip_executable, "install", "pandas", "requests", "requests_cache", "tqdm"], check=True)
 except subprocess.CalledProcessError as e:
-    print(f"❌ Environment setup failed with exit code {e.returncode}")
+    print(f"[NG] Environment setup failed with exit code {e.returncode}")
     print(f"Command: {e.cmd}")
     sys.exit(1)
 
@@ -47,13 +47,13 @@ for script in SCRIPTS:
     try:
         subprocess.run([os.path.join(BASE, ".venv", "bin", "python"), path], check=True)
     except subprocess.CalledProcessError as e:
-        print(f"❌ {script} failed with exit code {e.returncode}")
+        print(f"[NG] {script} failed with exit code {e.returncode}")
         print(f"Command: {e.cmd}")
         break
     except Exception as e:
-        print(f"⚠️ Unexpected error during {script}: {e}")
+        print(f"[WARN] Unexpected error during {script}: {e}")
         break
     else:
-        print(f"✅ {script} completed successfully.")
+        print(f"[OK] {script} completed successfully.")
 
 print("\n✔️  Pipeline finished. Check the md_folder for results (if no error occurred).")

@@ -90,7 +90,7 @@ def search_researchgate_for_paper(title: str, doi: str = "", authors: List[str] 
         time.sleep(random.uniform(1, 3))  # ランダムな待機時間
         
     except Exception as e:
-        print(f"❌ ResearchGate search error: {e}")
+        print(f"[NG] ResearchGate search error: {e}")
     
     return potential_urls
 
@@ -146,7 +146,7 @@ def extract_pdf_from_researchgate_page(page_url: str) -> List[str]:
         time.sleep(random.uniform(0.5, 2))  # ランダムな待機時間
         
     except Exception as e:
-        print(f"❌ Error extracting PDF from {page_url}: {e}")
+        print(f"[NG] Error extracting PDF from {page_url}: {e}")
     
     return list(set(pdf_urls))  # 重複削除
 
@@ -169,7 +169,7 @@ def download_pdf_from_researchgate(url: str, filepath: str) -> bool:
                     if pdf_links:
                         # 最初のPDFリンクを試行
                         return download_pdf_from_researchgate(pdf_links[0], filepath)
-                print(f"❌ Not a PDF file: {content_type}")
+                print(f"[NG] Not a PDF file: {content_type}")
                 return False
             
             # ファイルサイズチェック
@@ -177,7 +177,7 @@ def download_pdf_from_researchgate(url: str, filepath: str) -> bool:
             if content_length:
                 size_mb = int(content_length) / (1024 * 1024)
                 if size_mb < 0.1 or size_mb > 100:  # ResearchGateは大きなファイルもある
-                    print(f"❌ File size out of range: {size_mb:.1f}MB")
+                    print(f"[NG] File size out of range: {size_mb:.1f}MB")
                     return False
             
             # ダウンロード実行
@@ -192,14 +192,14 @@ def download_pdf_from_researchgate(url: str, filepath: str) -> bool:
         file_size = os.path.getsize(filepath)
         if file_size < 100 * 1024:  # 100KB未満
             os.remove(filepath)
-            print(f"❌ Downloaded file too small: {file_size} bytes")
+            print(f"[NG] Downloaded file too small: {file_size} bytes")
             return False
         
-        print(f"✅ Successfully downloaded from ResearchGate: {os.path.basename(filepath)} ({file_size/1024:.0f}KB)")
+        print(f"[OK] Successfully downloaded from ResearchGate: {os.path.basename(filepath)} ({file_size/1024:.0f}KB)")
         return True
         
     except Exception as e:
-        print(f"❌ Download failed from {url}: {e}")
+        print(f"[NG] Download failed from {url}: {e}")
         if os.path.exists(filepath):
             os.remove(filepath)
         return False
@@ -214,16 +214,14 @@ def add_pdf_embed_to_markdown(md_path: str, pdf_filename: str) -> None:
         if "## PDF" in content:
             return  # 既に追加済み
         
-        # PDF埋め込みセクションを作成
+        # PDF埋め込みセクションを作成（Obsidian形式）
         pdf_section = f"""
 
 ## PDF
 
-**フルテキストPDF**: [📄 {pdf_filename}](PDF/{pdf_filename})
+![[{pdf_filename}]]
 
-<embed src="PDF/{pdf_filename}" type="application/pdf" width="100%" height="600px" />
-
-*ブラウザでPDFが表示されない場合は、上記リンクから直接ダウンロードしてください。*"""
+*PDFファイル: {pdf_filename}*"""
         
         # 参考文献の前に挿入
         if "## 参考文献" in content:
@@ -238,7 +236,7 @@ def add_pdf_embed_to_markdown(md_path: str, pdf_filename: str) -> None:
         print(f"📝 Added PDF embed to: {os.path.basename(md_path)}")
         
     except Exception as e:
-        print(f"❌ Error adding PDF embed to {md_path}: {e}")
+        print(f"[NG] Error adding PDF embed to {md_path}: {e}")
 
 def process_json_for_researchgate_pdf(json_path: str, pdf_dir: str, md_dir: str) -> Tuple[bool, str]:
     """JSONファイルを処理してResearchGateからPDFダウンロードを試行"""
@@ -264,7 +262,7 @@ def process_json_for_researchgate_pdf(json_path: str, pdf_dir: str, md_dir: str)
             return False, f"PDF already exists: {pdf_filename}"
         
         thread_id = threading.current_thread().name
-        print(f"🔍 [{thread_id}] Searching ResearchGate for: {title[:50]}...")
+        print(f"[INFO] [{thread_id}] Searching ResearchGate for: {title[:50]}...")
         
         # ResearchGateで検索
         researchgate_pages = search_researchgate_for_paper(title, doi, authors)
@@ -276,7 +274,7 @@ def process_json_for_researchgate_pdf(json_path: str, pdf_dir: str, md_dir: str)
         
         # 各ページからPDF URLを抽出してダウンロード試行
         for i, page_url in enumerate(researchgate_pages[:3]):  # 最大3ページを試行
-            print(f"🔄 [{thread_id}] Checking page {i+1}: {page_url}")
+            print(f"[PROC] [{thread_id}] Checking page {i+1}: {page_url}")
             
             pdf_urls = extract_pdf_from_researchgate_page(page_url)
             
@@ -298,7 +296,7 @@ def process_json_for_researchgate_pdf(json_path: str, pdf_dir: str, md_dir: str)
 
 def main():
     """メイン処理"""
-    print("🚀 ResearchGate積極的PDF取得開始...")
+    print("[START] ResearchGate積極的PDF取得開始...")
     start_time = time.time()
     
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -312,7 +310,7 @@ def main():
     # 全JSONファイルを取得
     json_files = [f for f in os.listdir(json_dir) if f.endswith('.json')]
     
-    print(f"📊 Processing {len(json_files)} files with ResearchGate search...")
+    print(f"[DATA] Processing {len(json_files)} files with ResearchGate search...")
     
     # 並列処理実行（ResearchGateの負荷を考慮して制限）
     max_workers = min(3, len(json_files))  # 最大3スレッド（サーバー負荷考慮）
@@ -336,27 +334,27 @@ def main():
                 success, message = future.result()
                 if success:
                     success_count += 1
-                    print(f"✅ [{completed}/{len(json_files)}] {message}")
+                    print(f"[OK] [{completed}/{len(json_files)}] {message}")
                 else:
                     print(f"ℹ️  [{completed}/{len(json_files)}] {message}")
             except Exception as e:
-                print(f"❌ [{completed}/{len(json_files)}] Error with {json_file}: {e}")
+                print(f"[NG] [{completed}/{len(json_files)}] Error with {json_file}: {e}")
             
             # 進行状況表示
             if completed % 3 == 0 or completed == len(json_files):
                 elapsed = time.time() - start_time
                 rate = completed / elapsed if elapsed > 0 else 0
-                print(f"⏳ Progress: {completed}/{len(json_files)} files | {elapsed:.1f}s | {rate:.2f} files/sec")
+                print(f"[WAIT] Progress: {completed}/{len(json_files)} files | {elapsed:.1f}s | {rate:.2f} files/sec")
     
     # 結果集計
     total_pdfs = len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
     end_time = time.time()
     elapsed = end_time - start_time
     
-    print(f"\n🎉 ResearchGate PDF取得完了!")
-    print(f"📈 処理時間: {elapsed:.1f}秒")
-    print(f"📊 新規PDF取得: {success_count}件")
-    print(f"📁 総PDF数: {total_pdfs}件")
+    print(f"\n[DONE] ResearchGate PDF取得完了!")
+    print(f"[CHART] 処理時間: {elapsed:.1f}秒")
+    print(f"[DATA] 新規PDF取得: {success_count}件")
+    print(f"[DIR] 総PDF数: {total_pdfs}件")
     print(f"📂 PDFフォルダ: {pdf_dir}")
     print(f"⚡ 処理速度: {len(json_files)/elapsed:.2f} files/sec")
     print(f"🧵 並列度: {max_workers} threads")

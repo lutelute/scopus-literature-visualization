@@ -14,8 +14,8 @@ try:
     from email_notification import main
     main()
 except ImportError as e:
-    print("❌ メール通知機能のインポートに失敗しました")
+    print("[NG] メール通知機能のインポートに失敗しました")
     print(f"エラー: {e}")
     print("📋 utils/email_notification.py が存在することを確認してください")
 except Exception as e:
-    print(f"❌ 予期しないエラー: {e}")
+    print(f"[NG] 予期しないエラー: {e}")

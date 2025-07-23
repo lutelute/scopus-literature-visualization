@@ -27,7 +27,7 @@ def メール設定読み込み() -> Optional[Dict]:
             with open(config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            print(f"❌ メール設定読み込みエラー: {e}")
+            print(f"[NG] メール設定読み込みエラー: {e}")
             return None
     return None
 
@@ -37,10 +37,10 @@ def メール設定保存(設定: Dict) -> bool:
     try:
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(設定, f, ensure_ascii=False, indent=2)
-        print(f"✅ メール設定を保存しました: {config_path}")
+        print(f"[OK] メール設定を保存しました: {config_path}")
         return True
     except Exception as e:
-        print(f"❌ メール設定保存エラー: {e}")
+        print(f"[NG] メール設定保存エラー: {e}")
         return False
 
 def メール設定削除() -> bool:
@@ -49,17 +49,17 @@ def メール設定削除() -> bool:
     try:
         if os.path.exists(config_path):
             os.remove(config_path)
-            print("✅ メール設定を削除しました")
+            print("[OK] メール設定を削除しました")
         return True
     except Exception as e:
-        print(f"❌ メール設定削除エラー: {e}")
+        print(f"[NG] メール設定削除エラー: {e}")
         return False
 
 def メール設定セットアップ() -> bool:
     """メール設定の対話的セットアップ"""
     print("\n📧 メール完了通知の設定")
     print("=" * 40)
-    print("💡 Gmail使用を推奨（アプリパスワード必要）")
+    print("[HINT] Gmail使用を推奨（アプリパスワード必要）")
     print("📋 設定内容は暗号化されずに保存されます（ローカルのみ）")
     
     try:
@@ -67,12 +67,12 @@ def メール設定セットアップ() -> bool:
         print("\n📤 送信者設定:")
         送信者メール = input("送信者メールアドレス: ").strip()
         if not 送信者メール or "@" not in 送信者メール:
-            print("❌ 有効なメールアドレスを入力してください")
+            print("[NG] 有効なメールアドレスを入力してください")
             return False
         
         送信者パスワード = getpass.getpass("送信者パスワード（アプリパスワード推奨）: ")
         if not 送信者パスワード:
-            print("❌ パスワードを入力してください")
+            print("[NG] パスワードを入力してください")
             return False
         
         # 受信者情報
@@ -102,7 +102,7 @@ def メール設定セットアップ() -> bool:
             except ValueError:
                 smtpポート = 587
         else:
-            print("❌ 無効な選択です")
+            print("[NG] 無効な選択です")
             return False
         
         # 設定保存
@@ -120,21 +120,21 @@ def メール設定セットアップ() -> bool:
         }
         
         # 接続テスト
-        print("\n🔍 接続テスト中...")
+        print("\n[INFO] 接続テスト中...")
         if メール送信テスト(設定):
             if メール設定保存(設定):
-                print("\n🎉 メール設定完了！")
+                print("\n[DONE] メール設定完了！")
                 print("📧 今後の処理完了時にメール通知が送信されます")
                 return True
         
-        print("❌ メール設定に失敗しました")
+        print("[NG] メール設定に失敗しました")
         return False
         
     except KeyboardInterrupt:
         print("\n⏹️  設定がキャンセルされました")
         return False
     except Exception as e:
-        print(f"❌ 設定エラー: {e}")
+        print(f"[NG] 設定エラー: {e}")
         return False
 
 def メール送信テスト(設定: Dict) -> bool:
@@ -146,7 +146,7 @@ def メール送信テスト(設定: Dict) -> bool:
 
 このメールは、Scopus文献可視化システムのメール通知機能のテストメールです。
 
-✅ メール設定が正常に完了しました
+[OK] メール設定が正常に完了しました
 📧 今後の処理完了時に通知メールが送信されます
 
 Scopus文献可視化システム
@@ -155,7 +155,7 @@ Scopus文献可視化システム
         return メール送信(設定, 件名, 本文, テストモード=True)
         
     except Exception as e:
-        print(f"❌ テストメール送信エラー: {e}")
+        print(f"[NG] テストメール送信エラー: {e}")
         return False
 
 def メール送信(設定: Dict, 件名: str, 本文: str, テストモード: bool = False) -> bool:
@@ -181,16 +181,16 @@ def メール送信(設定: Dict, 件名: str, 本文: str, テストモード: 
         smtp.quit()
         
         if テストモード:
-            print("✅ テストメール送信成功")
+            print("[OK] テストメール送信成功")
         else:
             print("📧 完了通知メールを送信しました")
         return True
         
     except Exception as e:
         if テストモード:
-            print(f"❌ テストメール送信失敗: {e}")
+            print(f"[NG] テストメール送信失敗: {e}")
         else:
-            print(f"❌ メール送信失敗: {e}")
+            print(f"[NG] メール送信失敗: {e}")
         return False
 
 def 処理完了通知送信(成功ステップ: int, 総ステップ: int, 実行時間: float, 
@@ -201,19 +201,19 @@ def 処理完了通知送信(成功ステップ: int, 総ステップ: int, 実�
         return False
     
     # メール内容作成
-    件名 = f"🎉 Scopus文献可視化システム - 処理完了通知 ({成功ステップ}/{総ステップ})"
+    件名 = f"[DONE] Scopus文献可視化システム - 処理完了通知 ({成功ステップ}/{総ステップ})"
     
     本文 = f"""
-📊 Scopus文献可視化システム処理完了
+[DATA] Scopus文献可視化システム処理完了
 
 実行結果:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📈 成功ステップ: {成功ステップ}/{総ステップ}
+[CHART] 成功ステップ: {成功ステップ}/{総ステップ}
 ⏱️  実行時間: {実行時間/60:.1f}分
 📅 完了日時: {time.strftime("%Y-%m-%d %H:%M:%S")}
 
-📁 生成ファイル数:
-   📄 JSONファイル: {生成ファイル数.get('json', 0)}件
+[DIR] 生成ファイル数:
+   [FILE] JSONファイル: {生成ファイル数.get('json', 0)}件
    📝 Markdownファイル: {生成ファイル数.get('md', 0)}件
    📋 PDFファイル: {生成ファイル数.get('pdf', 0)}件
 """
@@ -221,19 +221,19 @@ def 処理完了通知送信(成功ステップ: int, 総ステップ: int, 実�
     if pdf取得結果:
         本文 += f"""
 📥 PDF取得結果:
-   📈 新規PDF取得: {pdf取得結果.get('新規', 0)}件
-   📁 総PDF数: {pdf取得結果.get('総数', 0)}件
+   [CHART] 新規PDF取得: {pdf取得結果.get('新規', 0)}件
+   [DIR] 総PDF数: {pdf取得結果.get('総数', 0)}件
    ⚡ 処理速度: {pdf取得結果.get('速度', 0):.1f} files/sec
 """
 
     if 成功ステップ == 総ステップ:
         本文 += """
-🎯 ステータス: 全処理完了
+[TARGET] ステータス: 全処理完了
 📂 結果確認: md_folder/ でMarkdownファイルを確認してください
 """
     else:
         本文 += """
-⚠️  ステータス: 一部ステップでエラーが発生
+[WARN]  ステータス: 一部ステップでエラーが発生
 📋 詳細: ログを確認してください
 """
 
@@ -252,9 +252,9 @@ def メール設定状況確認() -> Tuple[bool, str]:
     if 設定:
         受信者 = 設定.get('受信者', 'Unknown')
         設定日時 = 設定.get('設定日時', 'Unknown')
-        return True, f"✅ 設定済み（受信者: {受信者}、設定日: {設定日時}）"
+        return True, f"[OK] 設定済み（受信者: {受信者}、設定日: {設定日時}）"
     else:
-        return False, "❌ 未設定"
+        return False, "[NG] 未設定"
 
 def main():
     """メール設定管理のメイン処理"""
@@ -280,25 +280,25 @@ def main():
                 メール設定セットアップ()
             elif 選択 == "2":
                 設定済み, 状況 = メール設定状況確認()
-                print(f"📊 {状況}")
+                print(f"[DATA] {状況}")
             elif 選択 == "3":
                 設定 = メール設定読み込み()
                 if 設定:
                     メール送信テスト(設定)
                 else:
-                    print("❌ メール設定がありません。先にセットアップしてください。")
+                    print("[NG] メール設定がありません。先にセットアップしてください。")
             elif 選択 == "4":
                 if 設定済み:
                     確認 = input("設定を削除しますか？ (y/n): ").lower().strip()
                     if 確認 in ['y', 'yes']:
                         メール設定削除()
                 else:
-                    print("❌ 削除する設定がありません")
+                    print("[NG] 削除する設定がありません")
             elif 選択 == "5":
                 print("👋 終了します")
                 break
             else:
-                print("❌ 無効な選択です")
+                print("[NG] 無効な選択です")
                 
         except KeyboardInterrupt:
             print("\n👋 終了します")

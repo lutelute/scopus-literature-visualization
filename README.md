@@ -52,7 +52,38 @@ Scopus論文データベースから取得した文献情報を可視化する�
 
 ## 🚀 使用方法
 
-### 🎯 ワンコマンド全自動実行（推奨）
+### 📦 パッケージインストール（推奨）
+
+**どこからでも実行可能なツールとしてインストール**
+
+```bash
+# 1. ツールをクローン
+git clone https://github.com/lutelute/scopus-literature-visualization.git
+cd scopus-literature-visualization
+
+# 2. パッケージとしてインストール
+pip install -e .
+
+# 3. どこからでも実行可能
+cd /path/to/your/data  # CSVファイルがあるフォルダに移動
+scopus-lit-viz --auto  # 全自動実行
+```
+
+**使用可能なコマンド**
+- `scopus-lit-viz`: メインツール（パイプライン + PDF取得）
+- `scopus-pipeline`: パイプライン処理のみ
+- `scopus-pdf`: PDF取得のみ
+
+**コマンドオプション**
+```bash
+scopus-lit-viz --help                    # ヘルプ表示
+scopus-lit-viz --auto                    # 全自動実行
+scopus-lit-viz --dir /path/to/data       # 特定ディレクトリで実行
+scopus-lit-viz --pipeline-only           # パイプラインのみ
+scopus-lit-viz --pdf-only                # PDF取得のみ
+```
+
+### 🎯 従来のローカル実行方法
 
 **🔧 初回セットアップ（1回だけ）**
 ```bash
@@ -214,7 +245,14 @@ python test_crossplatform.py
 ### 必須要件
 - **Python 3.8+** (Python 3.7は2023年6月でサポート終了)
 - **⚠️  Python 3.9非対応**: 既知の問題により除外（3.8, 3.10, 3.11, 3.12推奨）
+- **64-bit Python推奨**: 特にWindows環境では32-bit版での問題を回避
 - **インターネット接続**（Crossref API, Unpaywall API使用）
+
+### 🪟 Windows固有の注意事項
+- **pandas**: Windows pre-built wheelsでインストール問題解決済み
+- **Python 3.11+**: `async-timeout`不要（`asyncio.timeout`を使用）
+- **Visual C++**: 通常は不要（pre-built wheelsにより）
+- **PowerShell**: 実行ポリシー自動設定（CI環境）
 
 ### 🤖 CI/CD環境対応
 - **GitHub Actions**: 自動テスト対応（非対話的実行）

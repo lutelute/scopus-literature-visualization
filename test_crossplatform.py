@@ -13,7 +13,7 @@ import importlib.util
 
 def OS情報表示():
     """現在のOS情報を表示"""
-    print("🖥️  システム情報:")
+    print("[システム情報]")
     print(f"   OS: {platform.system()}")
     print(f"   バージョン: {platform.version()}")
     print(f"   アーキテクチャ: {platform.machine()}")
@@ -50,7 +50,7 @@ def 仮想環境実行コマンド生成(仮想環境パス: str, コマンド: 
 
 def パス表示テスト():
     """パス処理のテスト"""
-    print("\\n📁 パス処理テスト:")
+    print("\\n[パス処理テスト]")
     
     # 基本パス処理
     基準ディレクトリ = os.path.dirname(os.path.abspath(__file__))
@@ -69,41 +69,41 @@ def パス表示テスト():
     
     for 名前, パス in テストパス.items():
         絶対パス = os.path.join(基準ディレクトリ, パス)
-        存在 = "✅" if os.path.exists(絶対パス) else "❌"
+        存在 = "[OK]" if os.path.exists(絶対パス) else "[NG]"
         print(f"   {存在} {名前}: {絶対パス}")
 
 def 仮想環境テスト():
     """仮想環境関連のテスト"""
-    print("\\n🔧 仮想環境テスト:")
+    print("\\n[仮想環境テスト]")
     
     仮想環境パス = ".venv"
     
     # 仮想環境の存在確認
     if os.path.exists(仮想環境パス):
-        print(f"   ✅ 仮想環境ディレクトリ存在: {仮想環境パス}")
+        print(f"   [OK] 仮想環境ディレクトリ存在: {仮想環境パス}")
         
         # OS別実行ファイルの確認
         python実行ファイル = 仮想環境Python実行ファイル取得(仮想環境パス)
         pip実行ファイル = 仮想環境pip実行ファイル取得(仮想環境パス)
         
-        python存在 = "✅" if os.path.exists(python実行ファイル) else "❌"
-        pip存在 = "✅" if os.path.exists(pip実行ファイル) else "❌"
+        python存在 = "[OK]" if os.path.exists(python実行ファイル) else "[NG]"
+        pip存在 = "[OK]" if os.path.exists(pip実行ファイル) else "[NG]"
         
         print(f"   {python存在} Python実行ファイル: {python実行ファイル}")
         print(f"   {pip存在} pip実行ファイル: {pip実行ファイル}")
         
         # アクティベーションコマンド表示
         アクティベーションコマンド = 仮想環境アクティベーションコマンド取得(仮想環境パス)
-        print(f"   📄 アクティベーションコマンド: {アクティベーションコマンド}")
+        print(f"   [CMD] アクティベーションコマンド: {アクティベーションコマンド}")
         
         # 仮想環境がアクティブかチェック
         is_venv_active = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
         状態 = "アクティブ" if is_venv_active else "非アクティブ"
-        print(f"   🔍 現在の状態: {状態}")
+        print(f"   [INFO] 現在の状態: {状態}")
         
     else:
-        print(f"   ❌ 仮想環境が見つかりません: {仮想環境パス}")
-        print(f"   💡 作成コマンド:")
+        print(f"   [NG] 仮想環境が見つかりません: {仮想環境パス}")
+        print(f"   [HINT] 作成コマンド:")
         if platform.system() == "Windows":
             print(f"      python -m venv {仮想環境パス}")
         else:
@@ -111,7 +111,7 @@ def 仮想環境テスト():
 
 def パッケージテスト():
     """必須パッケージのテスト"""
-    print("\\n📦 パッケージテスト:")
+    print("\\n[パッケージテスト]")
     
     必須パッケージ = ['pandas', 'requests', 'requests_cache', 'tqdm']
     オプションパッケージ = ['aiohttp', 'nltk']
@@ -119,18 +119,18 @@ def パッケージテスト():
     print("   必須パッケージ:")
     for パッケージ名 in 必須パッケージ:
         spec = importlib.util.find_spec(パッケージ名)
-        状態 = "✅ インストール済み" if spec is not None else "❌ 未インストール"
+        状態 = "[OK] インストール済み" if spec is not None else "[NG] 未インストール"
         print(f"     {状態}: {パッケージ名}")
     
     print("   オプションパッケージ:")
     for パッケージ名 in オプションパッケージ:
         spec = importlib.util.find_spec(パッケージ名)
-        状態 = "✅ インストール済み" if spec is not None else "⚠️  未インストール"
+        状態 = "[OK] インストール済み" if spec is not None else "[WARN] 未インストール"
         print(f"     {状態}: {パッケージ名}")
 
 def コマンド例表示():
     """OS別のコマンド例を表示"""
-    print("\\n💡 OS別実行コマンド例:")
+    print("\\n[OS別実行コマンド例]")
     
     仮想環境パス = ".venv"
     
@@ -151,7 +151,7 @@ def コマンド例表示():
 
 def main():
     """メイン処理"""
-    print("🧪 Scopus文献可視化システム - クロスプラットフォーム対応テスト")
+    print("Scopus文献可視化システム - クロスプラットフォーム対応テスト")
     print("=" * 60)
     
     OS情報表示()
@@ -160,7 +160,7 @@ def main():
     パッケージテスト()
     コマンド例表示()
     
-    print("\\n🎯 テスト完了!")
+    print("\\n[テスト完了]")
     print("上記の結果を確認して、必要に応じて環境をセットアップしてください。")
 
 if __name__ == "__main__":
