@@ -61,6 +61,49 @@ def safe_fn(title: str, maxlen: int = 120) -> str:
     s = re.sub(r"_+", "_", s)[:maxlen]
     return s or hashlib.md5(title.encode()).hexdigest()[:maxlen]
 
+def extract_title_keywords(title: str) -> List[str]:
+    """タイトルから包括的にキーワードを抽出"""
+    if not title:
+        return []
+    
+    keywords = []
+    
+    # 基本的な単語抽出（3文字以上）
+    basic_words = re.findall(r'\b[a-zA-Z]{3,}\b', title.lower())
+    filtered_words = [w for w in basic_words if w not in STOP_TOK]
+    keywords.extend(filtered_words)
+    
+    # 技術用語・複合語の抽出（ハイフンやアンダースコアで繋がった語）
+    compound_words = re.findall(r'\b[a-zA-Z]+[_-][a-zA-Z]+(?:[_-][a-zA-Z]+)*\b', title.lower())
+    keywords.extend(compound_words)
+    
+    # 数値を含む専門用語（例：5G, CO2, IEEE802など）
+    tech_terms = re.findall(r'\b[a-zA-Z]*\d+[a-zA-Z]*\b', title)
+    keywords.extend([t.lower() for t in tech_terms if len(t) >= 2])
+    
+    # 大文字の略語（例：AI, ML, IoTなど）
+    acronyms = re.findall(r'\b[A-Z]{2,}\b', title)
+    keywords.extend([a.lower() for a in acronyms])
+    
+    return list(set(keywords))  # 重複削除
+
+def create_hashtag_content(tags: List[str]) -> str:
+    """ハッシュタグコンテンツを生成"""
+    if not tags:
+        return ""
+    
+    # タグを適切にフォーマット（#を付加）
+    hashtags = []
+    for tag in tags:
+        # 既に#で始まっている場合はそのまま、そうでなければ#を付加
+        if not tag.startswith('#'):
+            hashtags.append(f"#{tag}")
+        else:
+            hashtags.append(tag)
+    
+    # ハッシュタグを改行で区切って返す
+    return " ".join(hashtags)
+
 def ensure_nltk():
     """NLTK利用可能時のみリソースダウンロード"""
     if not NLTK_AVAILABLE:
@@ -232,23 +275,36 @@ def main():
                     bar.update(1)
                     continue
 
-                # キーワード抽出（NLTK利用可能時は高度な分析、不可時は基本分析）
+                # キーワード抽出（包括的な分析）
+                title_keywords = extract_title_keywords(ttl)
+                
+                # NLTK利用可能時は高度な品詞分析も追加
+                nltk_keywords = []
                 if NLTK_AVAILABLE:
                     try:
-                        tags = [t.lower() for t, p in nltk.pos_tag(word_tokenize(ttl))
-                                if p not in STOP_POS and t.lower() not in STOP_TOK]
+                        nltk_keywords = [t.lower() for t, p in nltk.pos_tag(word_tokenize(ttl))
+                                        if p not in STOP_POS and t.lower() not in STOP_TOK]
                     except:
-                        # NLTKエラー時は基本分析にフォールバック
-                        words = re.findall(r'\b[a-zA-Z]{3,}\b', ttl.lower())
-                        tags = [w for w in words if w not in STOP_TOK]
-                else:
-                    # 基本的なキーワード抽出（単語分割のみ）
-                    words = re.findall(r'\b[a-zA-Z]{3,}\b', ttl.lower())
-                    tags = [w for w in words if w not in STOP_TOK]
-                tags.append(f"year_{year}")
+                        pass  # NLTKエラー時は基本分析のみ使用
+                
+                # キーワードを統合（重複削除）
+                all_keywords = list(set(title_keywords + nltk_keywords))
+                all_keywords.append(f"year_{year}")
+                
+                # タグ用とハッシュタグ用でキーワードを分ける
+                tags = all_keywords[:15]  # ファイル名用は最初の15個まで
+                hashtag_keywords = all_keywords  # ハッシュタグは全て使用
                 md_p = os.path.join(mdir, safe_fn(ttl) + ".md")
                 with open(md_p, "w", encoding="utf-8") as fp:
+                    # タイトル行（ファイル名用の基本タグ）
                     fp.write("#" + " #".join(tags))
+                    
+                    # キーワードセクション（ハッシュタグ形式）
+                    hashtag_content = create_hashtag_content(hashtag_keywords)
+                    if hashtag_content:
+                        fp.write("\n\n## Keywords\n\n" + hashtag_content)
+                    
+                    # Abstract セクション
                     fp.write("\n\n## Abstract\n\n" + data.get("abstract", ""))
 
                 refs = data.get("references", [])
